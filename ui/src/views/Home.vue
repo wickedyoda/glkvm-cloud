@@ -2,17 +2,16 @@
   <el-container>
     <el-header class="header">
       <el-space>
-        <el-button type="primary" round icon="Refresh" @click="handleRefresh" :disabled="loading">{{ $t('Refresh List') }}</el-button>
-        <el-select v-model="group" filterable :placeholder="$t('ungrouped')" @change="getDevices">
-          <el-option v-for="item in groups" :key="item" :label="item == '' ? $t('ungrouped'): item " :value="item"/>
-        </el-select>
-        <el-input style="width:200px" v-model="filterString" search @input="handleSearch" :placeholder="$t('Please enter the filter key...')"/>
-        <el-button @click="showCmdForm" type="primary">{{ $t('Execute command') }}</el-button>
-      </el-space>
-      <el-space>
         <span style="color: var(--el-color-primary); font-size: 24px">{{ $t('device-count', {count: devlists.length}) }}</span>
         <el-divider direction="vertical" />
-        <el-button type="primary" @click="handleLogout">{{ $t('Sign out') }}</el-button>
+        <el-input style="width:200px" v-model="filterString" search @input="handleSearch" :placeholder="$t('Please enter the filter key...')"/>
+      </el-space>
+      <el-space>
+        <el-button type="primary" round icon="Refresh" @click="handleRefresh" :disabled="loading">{{ $t('Refresh List') }}</el-button>
+        <el-divider direction="vertical" />
+        <el-button @click="showCmdForm" type="primary">{{ $t('Execute command') }}</el-button>
+        <el-divider direction="vertical" />
+        <el-button type="danger" @click="handleLogout">{{ $t('Sign out') }}</el-button>
       </el-space>
     </el-header>
     <el-main>
@@ -164,8 +163,15 @@ const connectDevice = (devid) => {
 }
 
 const connectDeviceWeb = (dev) => {
-  web.dev = dev
-  web.modal = true
+  // web.dev = dev
+  // web.modal = true
+  let proto = 'https'
+  let ipaddr = '127.0.0.1'
+  let port = 443
+  let path = '/'
+  const addr = encodeURIComponent(`${ipaddr}:${port}${path}`)
+  console.log(addr)
+  window.open(`/web/${dev.id}/${proto}/${addr}`)
 }
 
 const showCmdForm = () => rttyCmd.value.showCmdForm()

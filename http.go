@@ -27,6 +27,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -86,6 +87,19 @@ func (srv *RttyServer) ListenHttpProxy() {
 	}
 	defer ln.Close()
 
+	sslCert := "/root/.acme.sh/clanxie.life_ecc/fullchain.cer"
+	sslKey := "/root/.acme.sh/clanxie.life_ecc/clanxie.life.key"
+	if sslCert != "" && sslKey != "" {
+		crt, err := tls.LoadX509KeyPair(sslCert, sslKey)
+		if err != nil {
+			log.Fatal().Msg(err.Error())
+		}
+
+		tlsConfig := &tls.Config{Certificates: []tls.Certificate{crt}}
+
+		ln = tls.NewListener(ln, tlsConfig)
+	}
+
 	srv.httpProxyPort = ln.Addr().(*net.TCPAddr).Port
 
 	log.Info().Msgf("Listen http proxy on: %s", ln.Addr().(*net.TCPAddr))
@@ -127,6 +141,16 @@ func doHttpProxy(srv *RttyServer, c net.Conn) {
 
 	req, err := http.ReadRequest(br)
 	if err != nil {
+		return
+	}
+	// 获取 URL 查询参数
+	queryParams := req.URL.Query()
+	name := queryParams.Get("sid")
+	if name != "" {
+		location := "/"
+		location += fmt.Sprintf("?_=%d", time.Now().Unix())
+
+		Write302WithCookie(c, location, "rtty-http-sid", name)
 		return
 	}
 
@@ -207,6 +231,7 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 	proto := c.Param("proto")
 	addr := c.Param("addr")
 	rawPath := c.Param("path")
+	log.Info().Msgf("httpProxyRedirect devid: %s, proto: %s, addr: %s, path: %s", devid, proto, addr, rawPath)
 
 	if !callUserHookUrl(cfg, c) {
 		c.Status(http.StatusForbidden)
@@ -236,6 +261,7 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 	}
 
 	location := c.Request.Header.Get("HttpProxyRedir")
+	log.Info().Msgf("HttpProxyRedir location: %s, devid: %s", location, devid)
 	if location == "" {
 		location = cfg.HttpProxyRedirURL
 		if location != "" {
@@ -267,6 +293,7 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 	}
 
 	sid, err := c.Cookie("rtty-http-sid")
+	log.Info().Msgf("rtty-http-sid: %s", sid)
 	if err == nil {
 		if v, loaded := httpProxySessions.LoadAndDelete(sid); loaded {
 			s := v.(*HttpProxySession)
@@ -276,7 +303,7 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 	}
 
 	sid = utils.GenUniqueID()
-
+	log.Info().Msgf("rtty-http-sid: %s", sid)
 	ctx, cancel := context.WithCancel(dev.ctx)
 
 	ses := &HttpProxySession{
@@ -302,7 +329,8 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 		log.Debug().Msgf("set cookie domain from HTTP header: %s, devid: %s", domain, devid)
 	}
 
-	c.SetCookie("rtty-http-sid", sid, 0, "", domain, false, true)
+	location = fmt.Sprintf("https://%s.clanxie.life%s?sid=%s", devid, cfg.AddrHttpProxy, sid)
+	log.Info().Msgf("Location: %s, devid: %s", location, devid)
 	c.Redirect(http.StatusFound, location)
 }
 
@@ -555,4 +583,18 @@ func sendHTTPErrorResponse(conn net.Conn, errorType string) {
 	response += htmlContent
 
 	conn.Write([]byte(response))
+}
+
+func Write302WithCookie(conn net.Conn, location, cookieName, cookieValue string) {
+	cookie := fmt.Sprintf("%s=%s; Path=/; HttpOnly", cookieName, cookieValue)
+	response := fmt.Sprintf(
+		"HTTP/1.1 302 Found\r\n"+
+			"Location: %s\r\n"+
+			"Set-Cookie: %s\r\n"+
+			"Content-Length: 0\r\n"+
+			"Connection: close\r\n"+
+			"\r\n",
+		location, cookie,
+	)
+	_, _ = conn.Write([]byte(response))
 }

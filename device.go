@@ -386,6 +386,7 @@ func (dev *Device) Register(srv *RttyServer) byte {
 		return devRegErrHookFailed
 	}
 
+	log.Info().Msgf("cfg.Token:%s，dev.token:%s", cfg.Token, dev.token)
 	if cfg.Token != "" && dev.token != cfg.Token {
 		log.Error().Msgf("invalid token for device '%s'", dev.id)
 		return devRegErrInvalidToken

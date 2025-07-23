@@ -25,6 +25,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"embed"
 	"io/fs"
 	"net"
@@ -294,6 +295,18 @@ func (srv *RttyServer) ListenAPI() error {
 		return err
 	}
 	defer ln.Close()
+	sslCert := "/root/.acme.sh/clanxie.life_ecc/fullchain.cer"
+	sslKey := "/root/.acme.sh/clanxie.life_ecc/clanxie.life.key"
+	if sslCert != "" && sslKey != "" {
+		crt, err := tls.LoadX509KeyPair(sslCert, sslKey)
+		if err != nil {
+			log.Fatal().Msg(err.Error())
+		}
+
+		tlsConfig := &tls.Config{Certificates: []tls.Certificate{crt}}
+
+		ln = tls.NewListener(ln, tlsConfig)
+	}
 
 	log.Info().Msgf("Listen users on: %s", ln.Addr().(*net.TCPAddr))
 
