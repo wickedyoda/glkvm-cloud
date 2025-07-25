@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "RTTY - 远程终端访问工具"
+    "title": "GLKVM - 轻量级远程访问平台"
   },
   "Authorization Required": "需要授权",
   "Username": "用户名",
@@ -9,7 +9,7 @@
   "Sign in": "登录",
   "Reset": "复位",
   "Signin Fail! password wrong.": "登录失败，密码错误",
-  "Refresh List": "刷新列表",
+  "Refresh List": "刷新",
   "ungrouped": "未分组",
   "Please enter the filter key...": "请输入关键字进行过滤...",
   "Execute command": "执行命令",

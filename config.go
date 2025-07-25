@@ -45,6 +45,12 @@ type Config struct {
 	Password             string
 	AllowOrigins         bool
 	PprofAddr            string
+	SslCert              string
+	SslKey               string
+	WebrtcIP             string
+	WebrtcPort           string
+	WebrtcUsername       string
+	WebrtcPassword       string
 }
 
 func (cfg *Config) Parse(c *cli.Command) error {
@@ -68,6 +74,14 @@ func (cfg *Config) Parse(c *cli.Command) error {
 	getFlagOpt(c, "password", &cfg.Password)
 	getFlagOpt(c, "allow-origins", &cfg.AllowOrigins)
 	getFlagOpt(c, "pprof", &cfg.PprofAddr)
+
+	getFlagOpt(c, "ssl-cert", &cfg.SslCert)
+	getFlagOpt(c, "ssl-key", &cfg.SslKey)
+
+	getFlagOpt(c, "webrtc-ip", &cfg.WebrtcIP)
+	getFlagOpt(c, "webrtc-port", &cfg.WebrtcPort)
+	getFlagOpt(c, "webrtc-username", &cfg.WebrtcUsername)
+	getFlagOpt(c, "webrtc-password", &cfg.WebrtcPassword)
 
 	return nil
 }
@@ -107,6 +121,13 @@ func parseYamlCfg(cfg *Config, conf string) error {
 	getConfigOpt(yamlCfg, "password", &cfg.Password)
 	getConfigOpt(yamlCfg, "allow-origins", &cfg.AllowOrigins)
 
+	getConfigOpt(yamlCfg, "ssl-cert", &cfg.SslCert)
+	getConfigOpt(yamlCfg, "ssl-key", &cfg.SslKey)
+
+	getConfigOpt(yamlCfg, "webrtc-ip", &cfg.WebrtcIP)
+	getConfigOpt(yamlCfg, "webrtc-port", &cfg.WebrtcPort)
+	getConfigOpt(yamlCfg, "webrtc-username", &cfg.WebrtcUsername)
+	getConfigOpt(yamlCfg, "webrtc-password", &cfg.WebrtcPassword)
 	return nil
 }
 

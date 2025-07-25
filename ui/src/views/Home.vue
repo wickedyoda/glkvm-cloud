@@ -9,6 +9,8 @@
       <el-space>
         <el-button type="primary" round icon="Refresh" @click="handleRefresh" :disabled="loading">{{ $t('Refresh List') }}</el-button>
         <el-divider direction="vertical" />
+        <el-button @click="showAddDeviceScript" type="primary" :icon="Plus">添加</el-button>
+        <el-divider direction="vertical" />
         <el-button @click="showCmdForm" type="primary">{{ $t('Execute command') }}</el-button>
         <el-divider direction="vertical" />
         <el-button type="danger" @click="handleLogout">{{ $t('Sign out') }}</el-button>
@@ -46,6 +48,7 @@
       </el-card>
     </el-main>
     <RttyCmd ref="rttyCmd" :selection="selection"/>
+    <RttyScript ref="rttyScript" :selection="selection"/>
     <RttyWeb v-model="web.modal" :dev="web.dev"/>
   </el-container>
 </template>
@@ -57,11 +60,14 @@ import { InternetExplorer as IEIcon } from '@vicons/fa'
 import { Terminal as TerminalIcon } from '@vicons/ionicons5'
 import RttyCmd from '../components/RttyCmd.vue'
 import RttyWeb from '../components/RttyWeb.vue'
+import RttyScript from '../components/RttyScript.vue'
 import axios from 'axios'
+import { Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 const rttyCmd = useTemplateRef('rttyCmd')
+const rttyScript = useTemplateRef('rttyScript')
 
 const group = ref('')
 const groups = ref([])
@@ -163,8 +169,6 @@ const connectDevice = (devid) => {
 }
 
 const connectDeviceWeb = (dev) => {
-  // web.dev = dev
-  // web.modal = true
   let proto = 'https'
   let ipaddr = '127.0.0.1'
   let port = 443
@@ -175,6 +179,8 @@ const connectDeviceWeb = (dev) => {
 }
 
 const showCmdForm = () => rttyCmd.value.showCmdForm()
+
+const showAddDeviceScript = () => rttyScript.value.showScriptDialog()
 
 onMounted(() => getGroups())
 </script>

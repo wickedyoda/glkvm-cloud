@@ -44,6 +44,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
+	"golang.org/x/net/publicsuffix"
 )
 
 type HttpProxySession struct {
@@ -87,10 +88,8 @@ func (srv *RttyServer) ListenHttpProxy() {
 	}
 	defer ln.Close()
 
-	sslCert := "/root/.acme.sh/clanxie.life_ecc/fullchain.cer"
-	sslKey := "/root/.acme.sh/clanxie.life_ecc/clanxie.life.key"
-	if sslCert != "" && sslKey != "" {
-		crt, err := tls.LoadX509KeyPair(sslCert, sslKey)
+	if cfg.SslCert != "" && cfg.SslKey != "" {
+		crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
 		if err != nil {
 			log.Fatal().Msg(err.Error())
 		}
@@ -329,7 +328,21 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
 		log.Debug().Msgf("set cookie domain from HTTP header: %s, devid: %s", domain, devid)
 	}
 
-	location = fmt.Sprintf("https://%s.clanxie.life%s?sid=%s", devid, cfg.AddrHttpProxy, sid)
+	// Get domain info
+	host := c.Request.Host
+	hostname, _, err := net.SplitHostPort(host)
+	if err != nil {
+		// 没有端口时直接使用 host
+		hostname = host
+	}
+	log.Info().Msgf("hostname: %s", hostname)
+	eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(hostname)
+	if err != nil {
+		log.Info().Msgf("Error parsing domain:%v", err)
+	}
+	log.Info().Msgf("eTLDPlusOne:%s", eTLDPlusOne)
+
+	location = fmt.Sprintf("https://%s.%s%s?sid=%s", devid, eTLDPlusOne, cfg.AddrHttpProxy, sid)
 	log.Info().Msgf("Location: %s, devid: %s", location, devid)
 	c.Redirect(http.StatusFound, location)
 }

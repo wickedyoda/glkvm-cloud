@@ -28,6 +28,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -153,6 +154,16 @@ func (srv *RttyServer) ListenDevices() {
 		log.Fatal().Msg(err.Error())
 	}
 	defer ln.Close()
+	if cfg.SslCert != "" && cfg.SslKey != "" {
+		crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
+		if err != nil {
+			log.Fatal().Msg(err.Error())
+		}
+
+		tlsConfig := &tls.Config{Certificates: []tls.Certificate{crt}}
+
+		ln = tls.NewListener(ln, tlsConfig)
+	}
 
 	log.Info().Msgf("Listen devices on: %s", ln.Addr().(*net.TCPAddr))
 

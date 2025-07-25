@@ -52,6 +52,8 @@ func (srv *RttyServer) Run() error {
 		go srv.ListenPprof()
 	}
 
+	log.Info().Msgf("SslCert: %s,SslKey: %s", srv.cfg.SslCert, srv.cfg.SslKey)
+
 	go srv.ListenDevices()
 	go srv.ListenHttpProxy()
 

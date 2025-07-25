@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  rttys:
+    container_name: glkvm_cloud
+    image: glkvm:v1
+    ports:
+      - "443:443"
+      - "10443:10443"
+      - "5912:5912"
+    volumes:
+      - ./rttys.conf:/home/rttys.conf:ro
+      - ./certificate/glkvm.cer:/home/certificate/glkvm_cer:ro
+      - ./certificate/glkvm.key:/home/certificate/glkvm_key:ro
+    command: ["-c", "/home/rttys.conf"]
+    restart: always

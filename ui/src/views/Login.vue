@@ -26,7 +26,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const formValue = reactive({
-  password: '666666'
+  password: 'rttys7ngz4hyc'
 })
 
 const handleSubmit = () => {

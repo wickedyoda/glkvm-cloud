@@ -290,15 +290,34 @@ func (srv *RttyServer) ListenAPI() error {
 		fh.ServeHTTP(c.Writer, c.Request)
 	})
 
+	r.GET("/get/scriptInfo", func(c *gin.Context) {
+		// Get domain info
+		host := c.Request.Host
+		hostname, _, err := net.SplitHostPort(host)
+		if err != nil {
+			// 没有端口时直接使用 host
+			hostname = host
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"hostname":       hostname,
+			"port":           cfg.AddrDev,
+			"token":          cfg.Token,
+			"webrtcIP":       cfg.WebrtcIP,
+			"webrtcPort":     cfg.WebrtcPort,
+			"webrtcUsername": cfg.WebrtcUsername,
+			"webrtcPassword": cfg.WebrtcPassword,
+		})
+	})
+
 	ln, err := net.Listen("tcp", cfg.AddrUser)
 	if err != nil {
 		return err
 	}
 	defer ln.Close()
-	sslCert := "/root/.acme.sh/clanxie.life_ecc/fullchain.cer"
-	sslKey := "/root/.acme.sh/clanxie.life_ecc/clanxie.life.key"
-	if sslCert != "" && sslKey != "" {
-		crt, err := tls.LoadX509KeyPair(sslCert, sslKey)
+
+	if cfg.SslCert != "" && cfg.SslKey != "" {
+		crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
 		if err != nil {
 			log.Fatal().Msg(err.Error())
 		}
