@@ -81,7 +81,9 @@ chmod +x "$WATCHDOG_SCRIPT"
 nohup "$WATCHDOG_SCRIPT" >> "$LOGFILE" 2>&1 &
 echo $! > "$LOCKFILE"
 
-echo "rtty watchdog started in background for device: $device_id"`
+echo "rtty watchdog started in background for device: $device_id"
+
+`
 }
 
 const showScriptDialog = async () => {
@@ -125,13 +127,29 @@ defineExpose({
 <style scoped>
 .script-box {
   border-radius: 6px;
-  background: #2d2d2d;
-  color: #ccc;
+  background: #f5f5f5;
+  color: #333;         
   padding: 16px;
   font-family: monospace;
   font-size: 14px;
   overflow-x: auto;
+  overflow-y: auto;
   line-height: 1.5;
+  max-height: 400px; /* 限制高度，防止撑高对话框 */
+}
+
+.script-box::-webkit-scrollbar {
+  height: 4px;  /* 横向滚动条高度 */
+  width: 4px;   /* 纵向滚动条宽度 */
+}
+
+.script-box::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 4px;
+}
+
+.script-box::-webkit-scrollbar-thumb:hover {
+  background: #888;
 }
 
 .script-header {

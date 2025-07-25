@@ -53,6 +53,12 @@ type Config struct {
 	WebrtcPassword       string
 }
 
+// docker mode fixed path for reading certificate
+const (
+	SslCert = "/home/certificate/glkvm_cer"
+	SslKey  = "/home/certificate/glkvm_key"
+)
+
 func (cfg *Config) Parse(c *cli.Command) error {
 	conf := c.String("conf")
 	if conf != "" {
@@ -75,8 +81,8 @@ func (cfg *Config) Parse(c *cli.Command) error {
 	getFlagOpt(c, "allow-origins", &cfg.AllowOrigins)
 	getFlagOpt(c, "pprof", &cfg.PprofAddr)
 
-	getFlagOpt(c, "ssl-cert", &cfg.SslCert)
-	getFlagOpt(c, "ssl-key", &cfg.SslKey)
+	cfg.SslCert = SslCert
+	cfg.SslKey = SslKey
 
 	getFlagOpt(c, "webrtc-ip", &cfg.WebrtcIP)
 	getFlagOpt(c, "webrtc-port", &cfg.WebrtcPort)
@@ -120,9 +126,6 @@ func parseYamlCfg(cfg *Config, conf string) error {
 	getConfigOpt(yamlCfg, "local-auth", &cfg.LocalAuth)
 	getConfigOpt(yamlCfg, "password", &cfg.Password)
 	getConfigOpt(yamlCfg, "allow-origins", &cfg.AllowOrigins)
-
-	getConfigOpt(yamlCfg, "ssl-cert", &cfg.SslCert)
-	getConfigOpt(yamlCfg, "ssl-key", &cfg.SslKey)
 
 	getConfigOpt(yamlCfg, "webrtc-ip", &cfg.WebrtcIP)
 	getConfigOpt(yamlCfg, "webrtc-port", &cfg.WebrtcPort)
