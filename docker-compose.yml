@@ -14,3 +14,16 @@ services:
       - ./certificate/glkvm.key:/home/certificate/glkvm_key:ro
     command: ["-c", "/home/rttys.conf"]
     restart: always
+
+  coturn:
+    image: coturn/coturn:edge-alpine
+    container_name: glkvm_coturn
+    restart: always
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    volumes:
+      - ./turnserver.conf:/etc/turnserver.conf:ro
+    command: ["-c", "/etc/turnserver.conf"]
