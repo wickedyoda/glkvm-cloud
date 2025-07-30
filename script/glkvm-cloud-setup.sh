@@ -11,7 +11,9 @@ else
     echo "Directory already exists: $GLKVM_DIR"
 fi
 
-IMAGE_URL="https://aw-test.gl-inet.cn/server-node/selfhost/glkvmcloud.tar"
+BASE_DOMAIN="https://aw-test.gl-inet.cn"
+
+IMAGE_URL="$BASE_DOMAIN/server-node/selfhost/glkvmcloud.tar"
 IMAGE_PATH="$GLKVM_DIR/glkvm-cloud.tar"
 
 echo "Downloading Docker image from: $IMAGE_URL"
@@ -73,6 +75,22 @@ WEBRTC_PASSWORD=$(generate_random_string)
 
 mkdir -p certificate
 
+CERT_DIR="$GLKVM_DIR/certificate"
+CER_URL="$BASE_DOMAIN/server-node/selfhost/glkvm.cer"
+KEY_URL="$BASE_DOMAIN/server-node/selfhost/glkvm.key"
+
+curl -L -o "$CERT_DIR/glkvm.cer" "$CER_URL"
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to download glkvm.cer"
+    
+fi
+
+curl -L -o "$CERT_DIR/glkvm.key" "$KEY_URL"
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to download glkvm.key"
+  
+fi
+
 cat > rttys.conf <<EOF
 # Authentication token for device connections
 token: $TOKEN
@@ -92,7 +110,7 @@ addr-http-proxy: :10443
 EOF
 
 cat > docker-compose.yml <<EOF
-version: '3.8'
+version: "3.3"
 
 services:
   rttys:
@@ -132,6 +150,25 @@ no-multicast-peers
 allowed-peer-ip=0.0.0.0/0
 EOF
 
-echo "GLKVM Cloud has been successfully initialized: $GLKVM_DIR"
-echo "🔐 GLKVM Cloud Web access password: $PASSWORD"
-echo "Next steps: configure your domain and SSL certificate (refer to the domain setup guide), then start your GLKVM Cloud with 'docker-compose up -d'."
+echo "✅ GLKVM Cloud has been successfully initialized at: $GLKVM_DIR"
+echo "🔐 Web access password: $PASSWORD"
+echo ""
+echo "📄 SSL certificates have been downloaded to: $GLKVM_DIR/certificate"
+echo "   You may replace the default certificate files with your own:"
+echo "     - Keep the filenames the same:"
+echo "         glkvm.cer"
+echo "         glkvm.key"
+echo "     - And place them in the directory: $GLKVM_DIR/certificate"
+echo ""
+echo "🚪 Please ensure the following ports are open (both in your firewall and cloud security group):"
+echo "     - 443/TCP       (Web UI access)"
+echo "     - 10443/TCP     (WebSocket proxy)"
+echo "     - 5912/TCP      (Device connection)"
+echo "     - 3478/TCP/UDP  (TURN server for WebRTC)"
+echo ""
+echo "🚀 Next steps:"
+echo "   1. Point your domain to this server's IP address."
+echo "   2. Replace the SSL certificate files if needed (see above)."
+echo "   3. Start GLKVM Cloud services:"
+echo "      cd $GLKVM_DIR && docker-compose up -d"
+
