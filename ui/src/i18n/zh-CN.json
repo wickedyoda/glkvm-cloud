@@ -89,5 +89,11 @@
   "Requesting device to create terminal...": "正在请求设备创建终端...",
   "Clipboard Permission Required": "需要剪切板权限",
   "clipboard_instructions": "要启用剪切板权限，请点击地址栏左侧的站点信息图标进入权限设置，或在浏览器设置的隐私安全选项中配置此网站的剪切板权限。也可使用快捷键 Shift+Insert 进行粘贴。",
-  "Virtual Keyboard": "虚拟键盘"
+  "Virtual Keyboard": "虚拟键盘",
+  "Copy Script": "复制脚本",
+  "Please run script in device shell to connected cloud": "请在设备端执行脚本连接平台",
+  "Add": "添加",
+  "Get script info failed": "获取脚本信息失败",
+  "Copied": "已复制",
+  "Copied failed": "复制失败"
 }

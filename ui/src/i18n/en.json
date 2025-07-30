@@ -89,5 +89,11 @@
   "Requesting device to create terminal...": "Requesting device to create terminal...",
   "Clipboard Permission Required": "Clipboard Permission Required",
   "clipboard_instructions": "To enable clipboard permissions, click the site information icon on the left of address bar to access permission settings, or configure clipboard permissions for this site in browser privacy settings. You can also use Shift+Insert keyboard shortcut to paste.",
-  "Virtual Keyboard": "Virtual Keyboard"
+  "Virtual Keyboard": "Virtual Keyboard",
+  "Copy Script": "Copy Script",
+  "Please run script in device shell to connected cloud": "Please run script in device shell to connected cloud",
+  "Add": "Add",
+  "Get script info failed": "Get script info failed",
+  "Copied": "Copied",
+  "Copied failed": "Copied failed"
 }

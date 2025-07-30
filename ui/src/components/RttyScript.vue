@@ -1,13 +1,13 @@
 <template>
-  <el-dialog v-model="scriptModel" :title="'请在设备端执行脚本连接平台'" width="800">
+  <el-dialog v-model="scriptModel" :title="$t('Please run script in device shell to connected cloud')" width="800">
     <div class="script-header">
-      <el-button icon="DocumentCopy" type="danger" size="small" @click="copyScript">复制脚本</el-button>
+      <el-button icon="DocumentCopy" type="danger" size="small" @click="copyScript">{{ $t('Copy Script') }}</el-button>
     </div>
 
     <pre class="script-box"><code ref="codeRef" class="language-bash">{{ scriptContent }}</code></pre>
 
     <template #footer>
-      <el-button type="primary" @click="closeScriptDialog">关闭</el-button>
+      <el-button type="primary" @click="closeScriptDialog">{{ $t('Close') }}</el-button>
     </template>
   </el-dialog>
 </template>
@@ -19,6 +19,8 @@ import Prism from 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
 import 'prismjs/components/prism-bash.js'
 import axios from 'axios'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const scriptModel = ref(false)
 const codeRef = ref(null)
@@ -94,7 +96,7 @@ const showScriptDialog = async () => {
 
     scriptModel.value = true
   } catch (err) {
-    ElMessage.error('获取脚本信息失败')
+    ElMessage.error(t('Get script info failed'))
   }
 }
 
@@ -105,9 +107,9 @@ const closeScriptDialog = () => {
 const copyScript = async () => {
   try {
     await navigator.clipboard.writeText(scriptContent.value)
-    ElMessage.success('已复制')
+    ElMessage.success(t('Copied'))
   } catch (e) {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('Copied failed'))
   }
 }
 

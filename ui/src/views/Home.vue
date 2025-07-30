@@ -9,7 +9,7 @@
       <el-space>
         <el-button type="primary" round icon="Refresh" @click="handleRefresh" :disabled="loading">{{ $t('Refresh List') }}</el-button>
         <el-divider direction="vertical" />
-        <el-button @click="showAddDeviceScript" type="primary" :icon="Plus">添加</el-button>
+        <el-button @click="showAddDeviceScript" type="primary" :icon="Plus">{{ $t('Add') }}</el-button>
         <el-divider direction="vertical" />
         <el-button @click="showCmdForm" type="primary">{{ $t('Execute command') }}</el-button>
         <el-divider direction="vertical" />
