@@ -15,19 +15,28 @@ BASE_DOMAIN="https://aw-test.gl-inet.cn"
 
 IMAGE_URL="$BASE_DOMAIN/server-node/selfhost/glkvmcloud.tar"
 IMAGE_PATH="$GLKVM_DIR/glkvm-cloud.tar"
-
 echo "Downloading Docker image from: $IMAGE_URL"
 curl -L -o "$IMAGE_PATH" "$IMAGE_URL"
-
 if [ $? -ne 0 ]; then
     echo "❌ Failed to download image. Please check network or URL."
     exit 1
 fi
-
 echo "Downloaded image to: $IMAGE_PATH"
+
+
+COTURN_URL="$BASE_DOMAIN/server-node/selfhost/glkvmcoturn.tar"
+COTURN_PATH="$GLKVM_DIR/glkvm-coturn.tar"
+echo "Downloading Docker image from: $COTURN_URL"
+curl -L -o "$COTURN_PATH" "$COTURN_URL"
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to download image. Please check network or URL."
+    exit 1
+fi
+echo "Downloaded image to: $COTURN_PATH"
 
 echo "Importing Docker image..."
 docker load -i "$IMAGE_PATH"
+docker load -i "$COTURN_PATH"
 
 if [ $? -eq 0 ]; then
     echo "✅ Docker image imported successfully."

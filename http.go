@@ -25,36 +25,36 @@
 package main
 
 import (
-	"bufio"
-	"context"
-	"crypto/tls"
-	"encoding/binary"
-	"errors"
-	"fmt"
-	"net"
-	"net/http"
-	"net/url"
-	"strconv"
-	"sync"
-	"sync/atomic"
-	"time"
+    "bufio"
+    "context"
+    "crypto/tls"
+    "encoding/binary"
+    "errors"
+    "fmt"
+    "net"
+    "net/http"
+    "net/url"
+    "strconv"
+    "sync"
+    "sync/atomic"
+    "time"
 
-	"rttys/utils"
+    "rttys/utils"
 
-	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
-	"golang.org/x/net/publicsuffix"
+    "github.com/gin-gonic/gin"
+    "github.com/rs/zerolog/log"
+    "github.com/valyala/bytebufferpool"
+    "golang.org/x/net/publicsuffix"
 )
 
 type HttpProxySession struct {
-	expire   atomic.Int64
-	ctx      context.Context
-	cancel   context.CancelFunc
-	devid    string
-	group    string
-	destaddr string
-	https    bool
+    expire   atomic.Int64
+    ctx      context.Context
+    cancel   context.CancelFunc
+    devid    string
+    group    string
+    destaddr string
+    https    bool
 }
 
 var httpProxySessions = sync.Map{}
@@ -62,377 +62,389 @@ var httpProxySessions = sync.Map{}
 const httpProxySessionsExpire = 15 * time.Minute
 
 func (ses *HttpProxySession) Expire() {
-	ses.expire.Store(time.Now().Add(httpProxySessionsExpire).Unix())
+    ses.expire.Store(time.Now().Add(httpProxySessionsExpire).Unix())
 }
 
 func (ses *HttpProxySession) String() string {
-	return fmt.Sprintf("{devid: %s, group: %s, destaddr: %s, https: %v}",
-		ses.devid, ses.group, ses.destaddr, ses.https)
+    return fmt.Sprintf("{devid: %s, group: %s, destaddr: %s, https: %v}",
+        ses.devid, ses.group, ses.destaddr, ses.https)
 }
 
 func (srv *RttyServer) ListenHttpProxy() {
-	cfg := &srv.cfg
+    cfg := &srv.cfg
 
-	if cfg.AddrHttpProxy != "" {
-		addr, err := net.ResolveTCPAddr("tcp", cfg.AddrHttpProxy)
-		if err != nil {
-			log.Warn().Msg("invalid http proxy addr: " + err.Error())
-		} else {
-			srv.httpProxyPort = addr.Port
-		}
-	}
+    if cfg.AddrHttpProxy != "" {
+        addr, err := net.ResolveTCPAddr("tcp", cfg.AddrHttpProxy)
+        if err != nil {
+            log.Warn().Msg("invalid http proxy addr: " + err.Error())
+        } else {
+            srv.httpProxyPort = addr.Port
+        }
+    }
 
-	ln, err := net.Listen("tcp", cfg.AddrHttpProxy)
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-	}
-	defer ln.Close()
+    ln, err := net.Listen("tcp", cfg.AddrHttpProxy)
+    if err != nil {
+        log.Fatal().Msg(err.Error())
+    }
+    defer ln.Close()
 
-	if cfg.SslCert != "" && cfg.SslKey != "" {
-		crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
-		if err != nil {
-			log.Fatal().Msg(err.Error())
-		}
+    if cfg.SslCert != "" && cfg.SslKey != "" {
+        crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
+        if err != nil {
+            log.Fatal().Msg(err.Error())
+        }
 
-		tlsConfig := &tls.Config{Certificates: []tls.Certificate{crt}}
+        tlsConfig := &tls.Config{Certificates: []tls.Certificate{crt}}
 
-		ln = tls.NewListener(ln, tlsConfig)
-	}
+        ln = tls.NewListener(ln, tlsConfig)
+    }
 
-	srv.httpProxyPort = ln.Addr().(*net.TCPAddr).Port
+    srv.httpProxyPort = ln.Addr().(*net.TCPAddr).Port
 
-	log.Info().Msgf("Listen http proxy on: %s", ln.Addr().(*net.TCPAddr))
+    log.Info().Msgf("Listen http proxy on: %s", ln.Addr().(*net.TCPAddr))
 
-	go httpProxySessionsClean()
+    go httpProxySessionsClean()
 
-	for {
-		c, err := ln.Accept()
-		if err != nil {
-			log.Error().Msg(err.Error())
-			continue
-		}
+    for {
+        c, err := ln.Accept()
+        if err != nil {
+            log.Error().Msg(err.Error())
+            continue
+        }
 
-		go doHttpProxy(srv, c)
-	}
+        go doHttpProxy(srv, c)
+    }
 }
 
 func httpProxySessionsClean() {
-	for {
-		time.Sleep(time.Second * 30)
+    for {
+        time.Sleep(time.Second * 30)
 
-		httpProxySessions.Range(func(key, value any) bool {
-			ses := value.(*HttpProxySession)
-			if time.Now().Unix() > ses.expire.Load() {
-				log.Debug().Msgf("Http proxy session '%s' expired", key)
-				ses.cancel()
-				httpProxySessions.Delete(key)
-			}
-			return true
-		})
-	}
+        httpProxySessions.Range(func(key, value any) bool {
+            ses := value.(*HttpProxySession)
+            if time.Now().Unix() > ses.expire.Load() {
+                log.Debug().Msgf("Http proxy session '%s' expired", key)
+                ses.cancel()
+                httpProxySessions.Delete(key)
+            }
+            return true
+        })
+    }
 }
 
 func doHttpProxy(srv *RttyServer, c net.Conn) {
-	defer logPanic()
-	defer c.Close()
+    defer logPanic()
+    defer c.Close()
 
-	br := bufio.NewReader(c)
+    br := bufio.NewReader(c)
 
-	req, err := http.ReadRequest(br)
-	if err != nil {
-		return
-	}
-	// 获取 URL 查询参数
-	queryParams := req.URL.Query()
-	name := queryParams.Get("sid")
-	if name != "" {
-		location := "/"
-		location += fmt.Sprintf("?_=%d", time.Now().Unix())
+    req, err := http.ReadRequest(br)
+    if err != nil {
+        return
+    }
+    // 获取 URL 查询参数
+    queryParams := req.URL.Query()
+    name := queryParams.Get("sid")
+    if name != "" {
+        location := "/"
+        location += fmt.Sprintf("?_=%d", time.Now().Unix())
 
-		Write302WithCookie(c, location, "rtty-http-sid", name)
-		return
-	}
+        Write302WithCookie(c, location, "rtty-http-sid", name)
+        return
+    }
 
-	cookie, err := req.Cookie("rtty-http-sid")
-	if err != nil {
-		log.Debug().Msgf(`not found cookie "rtty-http-sid"`)
-		sendHTTPErrorResponse(c, "invalid")
-		return
-	}
-	sid := cookie.Value
+    cookie, err := req.Cookie("rtty-http-sid")
+    if err != nil {
+        log.Debug().Msgf(`not found cookie "rtty-http-sid"`)
+        sendHTTPErrorResponse(c, "invalid")
+        return
+    }
+    sid := cookie.Value
 
-	sesVal, ok := httpProxySessions.Load(sid)
-	if !ok {
-		log.Debug().Msgf(`not found httpProxySession "%s"`, sid)
-		sendHTTPErrorResponse(c, "unauthorized")
-		return
-	}
+    sesVal, ok := httpProxySessions.Load(sid)
+    if !ok {
+        log.Debug().Msgf(`not found httpProxySession "%s"`, sid)
+        sendHTTPErrorResponse(c, "unauthorized")
+        return
+    }
 
-	ses := sesVal.(*HttpProxySession)
+    ses := sesVal.(*HttpProxySession)
 
-	dev := srv.GetDevice(ses.group, ses.devid)
-	if dev == nil {
-		log.Debug().Msgf(`device "%s" group "%s" offline`, ses.devid, ses.group)
-		sendHTTPErrorResponse(c, "offline")
-		return
-	}
+    dev := srv.GetDevice(ses.group, ses.devid)
+    if dev == nil {
+        log.Debug().Msgf(`device "%s" group "%s" offline`, ses.devid, ses.group)
+        sendHTTPErrorResponse(c, "offline")
+        return
+    }
 
-	hostHeaderRewrite := ses.destaddr
+    hostHeaderRewrite := ses.destaddr
 
-	destAddr := genDestAddr(hostHeaderRewrite)
-	srcAddr := tcpAddr2Bytes(c.RemoteAddr().(*net.TCPAddr))
+    destAddr := genDestAddr(hostHeaderRewrite)
+    srcAddr := tcpAddr2Bytes(c.RemoteAddr().(*net.TCPAddr))
 
-	ctx, cancel := context.WithCancel(ses.ctx)
-	defer cancel()
+    ctx, cancel := context.WithCancel(ses.ctx)
+    defer cancel()
 
-	go func() {
-		<-ctx.Done()
-		c.Close()
-		log.Debug().Msgf("http proxy conn closed: %s", ses)
-		dev.https.Delete(string(srcAddr))
-	}()
+    go func() {
+        <-ctx.Done()
+        c.Close()
+        log.Debug().Msgf("http proxy conn closed: %s", ses)
+        dev.https.Delete(string(srcAddr))
+    }()
 
-	log.Debug().Msgf("new http proxy conn: %s", ses)
+    log.Debug().Msgf("new http proxy conn: %s", ses)
 
-	dev.https.Store(string(srcAddr), c)
+    dev.https.Store(string(srcAddr), c)
 
-	hpw := &HttpProxyWriter{destAddr, srcAddr, hostHeaderRewrite, dev, ses.https}
+    hpw := &HttpProxyWriter{destAddr, srcAddr, hostHeaderRewrite, dev, ses.https}
 
-	req.Host = hostHeaderRewrite
-	hpw.WriteRequest(req)
+    req.Host = hostHeaderRewrite
+    hpw.WriteRequest(req)
 
-	if req.Header.Get("Upgrade") == "websocket" {
-		b := make([]byte, 4096)
+    if req.Header.Get("Upgrade") == "websocket" {
+        b := make([]byte, 4096)
 
-		for {
-			n, err := c.Read(b)
-			if err != nil {
-				return
-			}
-			sendHttpReq(dev, ses.https, srcAddr, destAddr, b[:n])
-			ses.Expire()
-		}
-	} else {
-		for {
-			req, err := http.ReadRequest(br)
-			if err != nil {
-				return
-			}
-			hpw.WriteRequest(req)
-			ses.Expire()
-		}
-	}
+        for {
+            n, err := c.Read(b)
+            if err != nil {
+                return
+            }
+            sendHttpReq(dev, ses.https, srcAddr, destAddr, b[:n])
+            ses.Expire()
+        }
+    } else {
+        for {
+            req, err := http.ReadRequest(br)
+            if err != nil {
+                return
+            }
+            hpw.WriteRequest(req)
+            ses.Expire()
+        }
+    }
 }
 
 func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
-	cfg := &srv.cfg
-	devid := c.Param("devid")
-	proto := c.Param("proto")
-	addr := c.Param("addr")
-	rawPath := c.Param("path")
-	log.Info().Msgf("httpProxyRedirect devid: %s, proto: %s, addr: %s, path: %s", devid, proto, addr, rawPath)
+    cfg := &srv.cfg
+    devid := c.Param("devid")
+    proto := c.Param("proto")
+    addr := c.Param("addr")
+    rawPath := c.Param("path")
+    log.Info().Msgf("httpProxyRedirect devid: %s, proto: %s, addr: %s, path: %s", devid, proto, addr, rawPath)
 
-	if !callUserHookUrl(cfg, c) {
-		c.Status(http.StatusForbidden)
-		return
-	}
+    if !callUserHookUrl(cfg, c) {
+        c.Status(http.StatusForbidden)
+        return
+    }
 
-	log.Debug().Msgf("httpProxyRedirect devid: %s, proto: %s, addr: %s, path: %s", devid, proto, addr, rawPath)
+    log.Debug().Msgf("httpProxyRedirect devid: %s, proto: %s, addr: %s, path: %s", devid, proto, addr, rawPath)
 
-	_, _, err := httpProxyVaildAddr(addr)
-	if err != nil {
-		log.Debug().Msgf("invalid addr: %s", addr)
-		c.Status(http.StatusBadRequest)
-		return
-	}
+    _, _, err := httpProxyVaildAddr(addr)
+    if err != nil {
+        log.Debug().Msgf("invalid addr: %s", addr)
+        c.Status(http.StatusBadRequest)
+        return
+    }
 
-	path, err := url.Parse(rawPath)
-	if err != nil {
-		log.Debug().Msgf("invalid path: %s", rawPath)
-		c.Status(http.StatusBadRequest)
-		return
-	}
+    path, err := url.Parse(rawPath)
+    if err != nil {
+        log.Debug().Msgf("invalid path: %s", rawPath)
+        c.Status(http.StatusBadRequest)
+        return
+    }
 
-	dev := srv.GetDevice(group, devid)
-	if dev == nil {
-		c.Redirect(http.StatusFound, "/error/offline")
-		return
-	}
+    dev := srv.GetDevice(group, devid)
+    if dev == nil {
+        c.Redirect(http.StatusFound, "/error/offline")
+        return
+    }
 
-	location := c.Request.Header.Get("HttpProxyRedir")
-	log.Info().Msgf("HttpProxyRedir location: %s, devid: %s", location, devid)
-	if location == "" {
-		location = cfg.HttpProxyRedirURL
-		if location != "" {
-			log.Debug().Msgf("use HttpProxyRedirURL from config: %s, devid: %s", location, devid)
-		}
-	} else {
-		log.Debug().Msgf("use HttpProxyRedir from HTTP header: %s, devid: %s", location, devid)
-	}
+    location := c.Request.Header.Get("HttpProxyRedir")
+    log.Info().Msgf("HttpProxyRedir location: %s, devid: %s", location, devid)
+    if location == "" {
+        location = cfg.HttpProxyRedirURL
+        if location != "" {
+            log.Debug().Msgf("use HttpProxyRedirURL from config: %s, devid: %s", location, devid)
+        }
+    } else {
+        log.Debug().Msgf("use HttpProxyRedir from HTTP header: %s, devid: %s", location, devid)
+    }
 
-	if location == "" {
-		host, _, err := net.SplitHostPort(c.Request.Host)
-		if err != nil {
-			host = c.Request.Host
-		}
+    if location == "" {
+        host, _, err := net.SplitHostPort(c.Request.Host)
+        if err != nil {
+            host = c.Request.Host
+        }
 
-		location = "http://" + host
+        location = "http://" + host
 
-		if srv.httpProxyPort != 80 {
-			location += fmt.Sprintf(":%d", srv.httpProxyPort)
-		}
-	}
+        if srv.httpProxyPort != 80 {
+            location += fmt.Sprintf(":%d", srv.httpProxyPort)
+        }
+    }
 
-	location += path.Path
+    location += path.Path
 
-	location += fmt.Sprintf("?_=%d", time.Now().Unix())
+    location += fmt.Sprintf("?_=%d", time.Now().Unix())
 
-	if path.RawQuery != "" {
-		location += "&" + path.RawQuery
-	}
+    if path.RawQuery != "" {
+        location += "&" + path.RawQuery
+    }
 
-	sid, err := c.Cookie("rtty-http-sid")
-	log.Info().Msgf("rtty-http-sid: %s", sid)
-	if err == nil {
-		if v, loaded := httpProxySessions.LoadAndDelete(sid); loaded {
-			s := v.(*HttpProxySession)
-			s.cancel()
-			log.Debug().Msgf(`del old httpProxySession "%s" for device "%s"`, sid, devid)
-		}
-	}
+    sid, err := c.Cookie("rtty-http-sid")
+    log.Info().Msgf("rtty-http-sid: %s", sid)
+    if err == nil {
+        if v, loaded := httpProxySessions.LoadAndDelete(sid); loaded {
+            s := v.(*HttpProxySession)
+            s.cancel()
+            log.Debug().Msgf(`del old httpProxySession "%s" for device "%s"`, sid, devid)
+        }
+    }
 
-	sid = utils.GenUniqueID()
-	log.Info().Msgf("rtty-http-sid: %s", sid)
-	ctx, cancel := context.WithCancel(dev.ctx)
+    sid = utils.GenUniqueID()
+    log.Info().Msgf("rtty-http-sid: %s", sid)
+    ctx, cancel := context.WithCancel(dev.ctx)
 
-	ses := &HttpProxySession{
-		ctx:      ctx,
-		cancel:   cancel,
-		devid:    devid,
-		group:    group,
-		destaddr: addr,
-		https:    proto == "https",
-	}
-	ses.Expire()
-	httpProxySessions.Store(sid, ses)
+    ses := &HttpProxySession{
+        ctx:      ctx,
+        cancel:   cancel,
+        devid:    devid,
+        group:    group,
+        destaddr: addr,
+        https:    proto == "https",
+    }
+    ses.Expire()
+    httpProxySessions.Store(sid, ses)
 
-	log.Debug().Msgf(`new httpProxySession "%s" for device "%s"`, sid, devid)
+    log.Debug().Msgf(`new httpProxySession "%s" for device "%s"`, sid, devid)
 
-	domain := c.Request.Header.Get("HttpProxyRedirDomain")
-	if domain == "" {
-		domain = cfg.HttpProxyRedirDomain
-		if domain != "" {
-			log.Debug().Msgf("set cookie domain from config: %s, devid: %s", domain, devid)
-		}
-	} else {
-		log.Debug().Msgf("set cookie domain from HTTP header: %s, devid: %s", domain, devid)
-	}
+    domain := c.Request.Header.Get("HttpProxyRedirDomain")
+    if domain == "" {
+        domain = cfg.HttpProxyRedirDomain
+        if domain != "" {
+            log.Debug().Msgf("set cookie domain from config: %s, devid: %s", domain, devid)
+        }
+    } else {
+        log.Debug().Msgf("set cookie domain from HTTP header: %s, devid: %s", domain, devid)
+    }
 
-	// Get domain info
-	host := c.Request.Host
-	hostname, _, err := net.SplitHostPort(host)
-	if err != nil {
-		// 没有端口时直接使用 host
-		hostname = host
-	}
-	log.Info().Msgf("hostname: %s", hostname)
-	eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(hostname)
-	if err != nil {
-		log.Info().Msgf("Error parsing domain:%v", err)
-	}
-	log.Info().Msgf("eTLDPlusOne:%s", eTLDPlusOne)
+    // Get domain info
+    host := c.Request.Host
+    hostname, _, err := net.SplitHostPort(host)
+    if err != nil {
+        // 没有端口时直接使用 host
+        hostname = host
+    }
+    log.Info().Msgf("hostname: %s", hostname)
 
-	location = fmt.Sprintf("https://%s.%s%s?sid=%s", devid, eTLDPlusOne, cfg.AddrHttpProxy, sid)
-	log.Info().Msgf("Location: %s, devid: %s", location, devid)
-	c.Redirect(http.StatusFound, location)
+    // 检查是否是 IP 地址
+    ip := net.ParseIP(hostname)
+    isIP := ip != nil
+    if isIP {
+        // IP 访问，直接跳转
+        location = fmt.Sprintf("https://%s%s?sid=%s", hostname, cfg.AddrHttpProxy, sid)
+        log.Info().Msgf("Using IP redirect: %s", location)
+    } else {
+        // 域名访问，拼接 devid 子域名
+        eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(hostname)
+        if err != nil {
+            log.Info().Msgf("Error parsing domain: %v", err)
+            eTLDPlusOne = hostname // fallback
+        }
+        location = fmt.Sprintf("https://%s.%s%s?sid=%s", devid, eTLDPlusOne, cfg.AddrHttpProxy, sid)
+        log.Info().Msgf("Using domain redirect: %s", location)
+    }
+
+    log.Info().Msgf("Final redirect location: %s", location)
+    c.Redirect(http.StatusFound, location)
 }
 
 func sendHttpReq(dev *Device, https bool, srcAddr []byte, destAddr []byte, data []byte) {
-	bb := bytebufferpool.Get()
-	defer bytebufferpool.Put(bb)
+    bb := bytebufferpool.Get()
+    defer bytebufferpool.Put(bb)
 
-	if dev.proto > 3 {
-		if https {
-			bb.WriteByte(1)
-		} else {
-			bb.WriteByte(0)
-		}
-	}
+    if dev.proto > 3 {
+        if https {
+            bb.WriteByte(1)
+        } else {
+            bb.WriteByte(0)
+        }
+    }
 
-	bb.Write(srcAddr)
-	bb.Write(destAddr)
-	bb.Write(data)
+    bb.Write(srcAddr)
+    bb.Write(destAddr)
+    bb.Write(data)
 
-	dev.WriteMsg(msgTypeHttp, "", bb.Bytes())
+    dev.WriteMsg(msgTypeHttp, "", bb.Bytes())
 }
 
 func genDestAddr(addr string) []byte {
-	destIP, destPort, err := httpProxyVaildAddr(addr)
-	if err != nil {
-		return nil
-	}
+    destIP, destPort, err := httpProxyVaildAddr(addr)
+    if err != nil {
+        return nil
+    }
 
-	b := make([]byte, 6)
-	copy(b, destIP)
+    b := make([]byte, 6)
+    copy(b, destIP)
 
-	binary.BigEndian.PutUint16(b[4:], destPort)
+    binary.BigEndian.PutUint16(b[4:], destPort)
 
-	return b
+    return b
 }
 
 func tcpAddr2Bytes(addr *net.TCPAddr) []byte {
-	b := make([]byte, 18)
+    b := make([]byte, 18)
 
-	binary.BigEndian.PutUint16(b[:2], uint16(addr.Port))
+    binary.BigEndian.PutUint16(b[:2], uint16(addr.Port))
 
-	copy(b[2:], addr.IP)
+    copy(b[2:], addr.IP)
 
-	return b
+    return b
 }
 
 func httpProxyVaildAddr(addr string) (net.IP, uint16, error) {
-	ips, ports, err := net.SplitHostPort(addr)
-	if err != nil {
-		ips = addr
-		ports = "80"
-	}
+    ips, ports, err := net.SplitHostPort(addr)
+    if err != nil {
+        ips = addr
+        ports = "80"
+    }
 
-	ip := net.ParseIP(ips)
-	if ip == nil {
-		return nil, 0, errors.New("invalid IPv4 Addr")
-	}
+    ip := net.ParseIP(ips)
+    if ip == nil {
+        return nil, 0, errors.New("invalid IPv4 Addr")
+    }
 
-	ip = ip.To4()
-	if ip == nil {
-		return nil, 0, errors.New("invalid IPv4 Addr")
-	}
+    ip = ip.To4()
+    if ip == nil {
+        return nil, 0, errors.New("invalid IPv4 Addr")
+    }
 
-	port, _ := strconv.Atoi(ports)
+    port, _ := strconv.Atoi(ports)
 
-	return ip, uint16(port), nil
+    return ip, uint16(port), nil
 }
 
 type HttpProxyWriter struct {
-	destAddr          []byte
-	srcAddr           []byte
-	hostHeaderRewrite string
-	dev               *Device
-	https             bool
+    destAddr          []byte
+    srcAddr           []byte
+    hostHeaderRewrite string
+    dev               *Device
+    https             bool
 }
 
 func (rw *HttpProxyWriter) Write(p []byte) (n int, err error) {
-	sendHttpReq(rw.dev, rw.https, rw.srcAddr, rw.destAddr, p)
-	return len(p), nil
+    sendHttpReq(rw.dev, rw.https, rw.srcAddr, rw.destAddr, p)
+    return len(p), nil
 }
 
 func (rw *HttpProxyWriter) WriteRequest(req *http.Request) {
-	req.Host = rw.hostHeaderRewrite
-	req.Write(rw)
+    req.Host = rw.hostHeaderRewrite
+    req.Write(rw)
 }
 
 func generateErrorHTML(errorType string) string {
-	return fmt.Sprintf(
-		`<!DOCTYPE html>
+    return fmt.Sprintf(
+        `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -586,28 +598,28 @@ func generateErrorHTML(errorType string) string {
 }
 
 func sendHTTPErrorResponse(conn net.Conn, errorType string) {
-	htmlContent := generateErrorHTML(errorType)
+    htmlContent := generateErrorHTML(errorType)
 
-	response := "HTTP/1.1 200 OK\r\n"
-	response += "Content-Type: text/html; charset=utf-8\r\n"
-	response += fmt.Sprintf("Content-Length: %d\r\n", len(htmlContent))
-	response += "Connection: close\r\n"
-	response += "\r\n"
-	response += htmlContent
+    response := "HTTP/1.1 200 OK\r\n"
+    response += "Content-Type: text/html; charset=utf-8\r\n"
+    response += fmt.Sprintf("Content-Length: %d\r\n", len(htmlContent))
+    response += "Connection: close\r\n"
+    response += "\r\n"
+    response += htmlContent
 
-	conn.Write([]byte(response))
+    conn.Write([]byte(response))
 }
 
 func Write302WithCookie(conn net.Conn, location, cookieName, cookieValue string) {
-	cookie := fmt.Sprintf("%s=%s; Path=/; HttpOnly", cookieName, cookieValue)
-	response := fmt.Sprintf(
-		"HTTP/1.1 302 Found\r\n"+
-			"Location: %s\r\n"+
-			"Set-Cookie: %s\r\n"+
-			"Content-Length: 0\r\n"+
-			"Connection: close\r\n"+
-			"\r\n",
-		location, cookie,
-	)
-	_, _ = conn.Write([]byte(response))
+    cookie := fmt.Sprintf("%s=%s; Path=/; HttpOnly", cookieName, cookieValue)
+    response := fmt.Sprintf(
+        "HTTP/1.1 302 Found\r\n"+
+            "Location: %s\r\n"+
+            "Set-Cookie: %s\r\n"+
+            "Content-Length: 0\r\n"+
+            "Connection: close\r\n"+
+            "\r\n",
+        location, cookie,
+    )
+    _, _ = conn.Write([]byte(response))
 }
