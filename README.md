@@ -1,49 +1,85 @@
-# rttys
+# Self-Deployed Lightweight Cloud KVM Remote Management Platform
 
-[1]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=plastic
-[2]: /LICENSE
-[3]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=plastic
-[4]: https://github.com/zhaojh329/rttys/pulls
-[5]: https://img.shields.io/badge/Issues-welcome-brightgreen.svg?style=plastic
-[6]: https://github.com/zhaojh329/rttys/issues/new
-[7]: https://img.shields.io/badge/release-5.2.0-blue.svg?style=plastic
-[8]: https://github.com/zhaojh329/rttys/releases
-[9]: https://github.com/zhaojh329/rttys/workflows/build/badge.svg
-[10]: https://img.shields.io/github/downloads/zhaojh329/rttys/total
-[12]: https://deepwiki.com/badge.svg
-[13]: https://deepwiki.com/zhaojh329/rttys
+Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailored for individuals and small businesses. This project is developed based on [rttys](https://github.com/zhaojh329/rttys), specifically designed for users managing fewer than 50 KVM devices.
 
-[![license][1]][2]
-[![PRs Welcome][3]][4]
-[![Issue Welcome][5]][6]
-[![Release Version][7]][8]
-![Build Status][9]
-![Downloads][10]
-[![Ask DeepWiki][12]][13]
+## Core Features
 
-> **🔗 This is the server component of the rtty project. For complete information please visit the main [rtty client repository](https://github.com/zhaojh329/rtty).**
+- 🚀 **Rapid Deployment** - Quick self-deployment with simple operations
+- 🔒 **Data Security** - Private deployment with full data control
+- 🎯 **Lightweight Design** - Optimized for small businesses and individual users
+- 🌐 **Unified Management** - Centralized management and remote control via public servers
+- 🏷️ **Brand Flexibility** - Minimal branding for easy customization
 
-**Official Website:** https://rttys.net/
+## Main Functions
 
-![](/img/terminal.gif)
-![](/img/file.gif)
-![](/img/web.gif)
-![](/img/virtual-keyboard.jpg)
+- ✅ **User Authentication** - Secure login authentication system
+- 📋 **Device Management** - Online device list monitoring
+- 📜 **Script Deployment** - Convenient script-based device addition
+- 🖥️ **Remote SSH** - Secure SSH remote connections
+- 🎮 **Remote Control** - Graphical remote desktop control
+- ⚡ **Batch Operations** - Batch command execution capabilities
 
-## 📖 About
+## Feature Demonstrations
 
-**rttys** is the server-side component of the [rtty](https://github.com/zhaojh329/rtty) remote terminal system. It provides a web-based management interface and handles connections from rtty clients running on remote devices.
+### Remote SSH Connection
 
-## 🏗️ Project Structure
+![Remote SSH Screenshot](img/ssh.png)
 
-This repository contains only the server-side components:
-- **Server binary**: The main rttys server program
-- **Web UI**: Browser-based management interface
-- **API**: RESTful API for device management
+### Remote Desktop Control
 
-## ⭐ Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=zhaojh329/rttys&type=Date)](https://www.star-history.com/#zhaojh329/rttys&Date)
+![Remote Control Screenshot](img/web.png)
 
-## 🤝 Contributing
-If you would like to help making [rttys](https://github.com/zhaojh329/rttys) better,
-see the [CONTRIBUTING.md](https://github.com/zhaojh329/rttys/blob/master/CONTRIBUTING.md) file.
+## Supported Operating Systems
+
+The following mainstream operating systems have been tested and verified:
+
+### Debian Family
+
+- Ubuntu 18.04 / 20.04 / 22.04 / 24.04
+- Debian 11 / 12
+
+### Red Hat Family
+
+- AlmaLinux 8 / 9
+- Rocky Linux 8 / 9
+- CentOS Stream 9
+
+## System Requirements
+
+### Server Configuration Requirements
+
+| Component    | Minimum Requirement |
+| ------------ | ------------------- |
+| CPU          | 2 cores or above    |
+| Memory       | ≥ 2 GB              |
+| Storage      | ≥ 40 GB             |
+| KVM Firmware | ≥ v1.5.0            |
+
+### Recommended Scale
+
+- **Recommended Device Count**: Under 50 devices
+- **Use Cases**: Individual users, small businesses, data security-sensitive environments
+
+## User Guide
+
+1. Access the management interface via web browser
+2. Login with administrator credentials
+3. Add KVM devices to be managed
+4. Begin remote management operations
+
+## Target Audience
+
+### Ideal for:
+
+- **Individual Users** - Tech enthusiasts managing personal server infrastructure
+- **Small Businesses** - Companies with limited IT resources needing simple KVM management
+- **Security-Conscious Organizations** - Users requiring complete data control and privacy
+- **Development Teams** - Teams needing lightweight, self-hosted remote access solutions
+
+### Perfect Use Cases:
+
+- Home lab management
+- Small office server administration
+- Development environment access
+- Educational institutions with limited budgets
+- Organizations with strict data residency requirements
