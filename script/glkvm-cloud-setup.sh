@@ -1,6 +1,70 @@
 #!/bin/bash
 echo "GLKVM cloud is building..."
-sed -i "s/#\$nrconf{restart} = 'i';/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
+
+# 初始化平台变量
+PLATFORM="unknown"
+
+# 识别系统类型
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_ID=$ID
+    OS_ID_LIKE=$ID_LIKE
+else
+    echo "Cannot determine OS. Exiting."
+    exit 1
+fi
+
+# Debian/Ubuntu 系列
+if [[ "$OS_ID" == "debian" || "$OS_ID" == "ubuntu" || "$OS_ID_LIKE" == *"debian"* ]]; then
+    sed -i "s/#\$nrconf{restart} = 'i';/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
+    PLATFORM="debian"
+    echo "Detected Debian-based system: $PRETTY_NAME"
+
+    apt update
+    apt install -y docker.io docker-compose curl ufw
+
+    # 防火墙规则
+    ufw allow 443/tcp
+    ufw allow 10443/tcp
+    ufw allow 5912/tcp
+    ufw allow 3478/tcp
+    ufw allow 3478/udp
+    echo "Firewall rules updated via UFW."
+
+# RedHat/CentOS/AlmaLinux 系列
+elif [[ "$OS_ID" == "centos" || "$OS_ID" == "rhel" || "$OS_ID" == "almalinux" || "$OS_ID" == "rocky" || "$OS_ID_LIKE" == *"rhel"* ]]; then
+    PLATFORM="redhat"
+    echo "Detected Red Hat-based system: $PRETTY_NAME"
+
+    dnf makecache
+    dnf install -y curl dnf-plugins-core
+
+    # 添加 Docker 源
+    dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    # 安装 Docker
+    dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+    # 启用服务
+    systemctl enable --now docker
+
+    # 防火墙规则
+    firewall-cmd --permanent --add-port=443/tcp
+    firewall-cmd --permanent --add-port=10443/tcp
+    firewall-cmd --permanent --add-port=5912/tcp
+    firewall-cmd --permanent --add-port=3478/tcp
+    firewall-cmd --permanent --add-port=3478/udp
+    firewall-cmd --reload
+    echo "Firewall rules updated via firewalld."
+
+else
+    echo "Unsupported OS: $PRETTY_NAME"
+    exit 1
+fi
+
+# ✅ 输出平台标记（后续逻辑可用 $PLATFORM 判断）
+echo "Platform detected: $PLATFORM"
+
 
 GLKVM_DIR="$PWD/glkvm_cloud"
 
@@ -10,6 +74,7 @@ if [ ! -d "$GLKVM_DIR" ]; then
 else
     echo "Directory already exists: $GLKVM_DIR"
 fi
+
 
 BASE_DOMAIN="https://aw-test.gl-inet.cn"
 
@@ -159,36 +224,70 @@ no-multicast-peers
 allowed-peer-ip=0.0.0.0/0
 EOF
 
+if [ "$PLATFORM" = "debian" ]; then
+    cd $GLKVM_DIR && docker-compose up -d
+   
+else
+    cd $GLKVM_DIR && docker compose up -d
+fi
 echo ""
 echo "✅ GLKVM Cloud has been successfully initialized at:"
 echo "   $GLKVM_DIR"
 echo ""
-echo "📄 SSL certificates have been downloaded to:"
-echo "   $GLKVM_DIR/certificate"
-echo "   You may replace the default certificate files with your own:"
-echo "     - Keep the filenames the same:"
-echo "         glkvm.cer"
-echo "         glkvm.key"
+echo "   If your server provider enforces a cloud security group (e.g., on AWS, Aliyun, etc.),"
+echo "   please ensure the following ports are allowed through:"
 echo ""
-echo "🚪 Please ensure the following ports are open (both in your firewall and cloud security group):"
 echo "     - 443/TCP       (Web UI access)"
 echo "     - 10443/TCP     (WebSocket proxy)"
 echo "     - 5912/TCP      (Device connection)"
 echo "     - 3478/TCP/UDP  (TURN server for WebRTC)"
 echo ""
-echo "🚀 Next steps:"
-echo "   1. Point your domain to this server's IP address."
-echo "   2. Replace the SSL certificate files if needed (see above)."
-echo "   3. Start GLKVM Cloud services:"
-echo "      cd $GLKVM_DIR && docker-compose up -d"
-echo "         or"
-echo "      cd $GLKVM_DIR && docker compose up -d"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔐 Web Access:"
+echo ""
+echo "   🌐 You can now access the GLKVM Cloud platform via:"
+echo "       https://$PUBLIC_IP"
+echo ""
+echo "   ⚠️  Note: Accessing via IP will trigger a browser certificate warning."
+echo "       To remove this warning, please configure your own domain and SSL certificate."
+echo ""
+echo "   🔑 Web UI password:"
+echo "       $PASSWORD"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔐 Web access password:"
+echo "📄 Default SSL certificates have been downloaded to:"
+echo "   $GLKVM_DIR/certificate"
 echo ""
-echo "     $PASSWORD"
+echo "🌐 Domain Configuration (recommended):"
+echo "   Please configure the following DNS records for your domain:"
+echo "     ┌────────────┬──────┬────────────────────┬─────────────────────────────┐"
+echo "     │ Hostname   │ Type │     Value           │         Purpose             │"
+echo "     ├────────────┼──────┼────────────────────┼─────────────────────────────┤"
+echo "     │ www        │  A   │ Your public IP      │ Web access to the platform │"
+echo "     │ *          │  A   │ Your public IP      │ Remote access to KVMs      │"
+echo "     └────────────┴──────┴────────────────────┴─────────────────────────────┘"
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔐 SSL Certificate:"
+echo "   The default certificate will trigger a browser warning."
+echo "   To remove it, please replace with your own **wildcard certificate**,"
+echo "   which must support both:"
+echo "     - *.your-domain.com (for remote KVM access)"
+echo "     - www.your-domain.com (for platform access)"
+echo ""
+echo "   Replace the following files in this directory:"
+echo "     - glkvm.cer"
+echo "     - glkvm.key"
+echo "   (Ensure filenames remain unchanged in: $GLKVM_DIR/certificate)"
+echo ""
+echo "🔄 After replacing the certificate, restart the lightweight cloud service with:"
+if [ "$PLATFORM" = "debian" ]; then
+echo "     cd $GLKVM_DIR && docker-compose down && docker-compose up -d"
+else
+echo "     cd $GLKVM_DIR && docker compose down && docker compose up -d"
+fi
+echo ""
+echo "  And then you can access the platform via your domain:"
+echo "     https://www.your-domain.com"
+echo ""
 
 
