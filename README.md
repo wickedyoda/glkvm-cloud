@@ -22,11 +22,10 @@ Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailo
 
 ###  Add KVM Devices to the Lightweight Cloud 
 
-![copy script](img\addDevice.png)
+![Add KVM Devices to the Lightweight Cloud](img/adddevice.png)
+![Add KVM Devices to the Lightweight Cloud](img/rundevicescript.png)
+![Add KVM Devices to the Lightweight Cloud](img/devicelist.png)
 
-![](img\runDeviceScript.png)
-
-![](img\deviceList.png)
 
 ### Remote SSH Connection
 
