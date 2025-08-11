@@ -8,8 +8,8 @@ Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailo
 
 - 📋 **Device Management** - Online device list monitoring
 - 📜 **Script Deployment** - Convenient script-based device addition
-- 🖥️ **Remote SSH** - Secure SSH remote connections
-- 🎮 **Remote Control** - Graphical remote desktop control
+- 🖥️ **Remote SSH** - Web SSH remote connections
+- 🎮 **Remote Control** - Web remote desktop control
 - ⚡ **Batch Operations** - Batch command execution capabilities
 - 🚀 **Rapid Deployment** - Quick self-deployment with simple operations
 - 🔒 **Data Security** - Private deployment with full data control
