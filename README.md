@@ -81,7 +81,7 @@ The default login password for the Web UI will be displayed in the installation 
 🔐 Please check the installation console for your web login password.
 ```
 
-![](img\password.png)
+![](img/password.png)
 
 ## Feature Demonstrations
 
