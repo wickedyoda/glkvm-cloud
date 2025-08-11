@@ -3,10 +3,10 @@
 # Go binary name
 BINARY_NAME = rttys
 
-# Go 构建标志
+# Go build flags
 BUILD_FLAGS := -ldflags "-s -w"
 
-# Go build config
+# Go build command
 GO_BUILD_CMD = go build $(BUILD_FLAGS) -o $(BINARY_NAME)
 
 # Paths
@@ -15,27 +15,27 @@ CONF_FILE = ./rttys.conf
 
 .PHONY: all ui build run build-run full-run
 
-# 只构建前端文件
+# Build frontend files only
 ui:
 	cd $(UI_DIR) && npm install && npm run build
 
-# 只构建 Go 二进制文件
+# Build Go binary only
 build:
 	CGO_ENABLED=0 $(GO_BUILD_CMD)
 
-# 只运行 Go 程序
+# Run Go program only
 run:
 	./$(BINARY_NAME) -c $(CONF_FILE)
 
-# 构建 前端和二进制并运行
+# Build frontend and Go binary
 build-all: ui build
 
-# 构建 Go 二进制并运行
+# Build Go binary and run
 build-run: build run
 
-# 构建前端、构建 Go 并运行
+# Build frontend, build Go binary, and run
 full-run: ui build run
 
-# 构建docker镜像
+# Build Docker image
 docker-build: ui build
 	docker build -t glkvm:v1 . 
