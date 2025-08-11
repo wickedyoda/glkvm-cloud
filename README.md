@@ -59,7 +59,7 @@ If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.
 Run the following command **as root** to install GLKVM Cloud:
 
 ```bash
-bash <(curl -fsSL https://aw-test.gl-inet.cn/server-node/selfhost/glkvm-cloud-setup.sh)
+curl -fsSL https://aw-test.gl-inet.cn/server-node/selfhost/glkvm-cloud-setup.sh | sudo bash
 ```
 
 ### 🌐 Platform Access
