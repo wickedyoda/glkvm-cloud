@@ -255,13 +255,5 @@ echo "   🔑 Web UI password:"
 echo "       $PASSWORD"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📄 Default SSL certificates have been saved to:"
-echo "   $GLKVM_DIR/certificate"
 echo ""
-echo "ℹ️  To replace them with your own certificates, please refer to the guide:"
-echo "   https://github.com/gl-inet/glkvm-cloud?tab=readme-ov-file#use-your-own-ssl-certificate-optional"
-echo ""
-
-
-
 
