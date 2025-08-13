@@ -238,7 +238,7 @@ echo "   If your server provider enforces a cloud security group (e.g., on AWS, 
 echo "   please ensure the following ports are allowed through:"
 echo ""
 echo "     - 443/TCP       (Web UI access)"
-echo "     - 10443/TCP     (WebSocket proxy)"
+echo "     - 10443/TCP     (Device Web remote access)"
 echo "     - 5912/TCP      (Device connection)"
 echo "     - 3478/TCP/UDP  (TURN server for WebRTC)"
 echo ""
