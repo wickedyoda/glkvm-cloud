@@ -59,7 +59,7 @@
 使用 **root 权限** 运行以下命令安装 GLKVM 轻量云：
 
 ```bash
-curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh | sudo bash
+( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
 
 ### 🌐 平台访问
