@@ -34,8 +34,8 @@ The following mainstream operating systems have been tested and verified
 
 |      Component      | Minimum Requirement |
 | :-----------------: | :-----------------: |
-|         CPU         |  2 cores or above   |
-|       Memory        |       ≥ 2 GB        |
+|         CPU         |  1 cores or above   |
+|       Memory        |       ≥ 1 GB        |
 |       Storage       |       ≥ 40 GB       |
 | KVM Device Firmware |      ≥ v1.5.0       |
 
