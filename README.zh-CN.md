@@ -3,7 +3,7 @@
 [English Documentation](./README.md) | 中文
 
 自部署轻量云（GLKVM Cloud）是一款面向个人和小微企业的轻量级 KVM 远程云平台。
-本项目基于 [rttys](https://github.com/zhaojh329/rttys) 开发， 适用于希望**快速**搭建设备远程访问云平台并重视**数据安全**的用户。
+本项目基于 [rttys](https://github.com/zhaojh329/rttys) 开发，专为需要**快速**构建远程访问平台并注重**数据安全**的用户而设计。 
 
 #### 主要功能与特性
 
