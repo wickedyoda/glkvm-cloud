@@ -2,7 +2,7 @@
 
 [中文文档](./README.zh-CN.md) | English
 
-Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailored for individuals and small businesses. This project is developed based on [rttys](https://github.com/zhaojh329/rttys), specifically designed for users managing fewer than 50 KVM devices.
+Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailored for individuals and small businesses. This project is developed based on [rttys](https://github.com/zhaojh329/rttys),  it is ideal for users who want to **quickly** set up a remote access platform while maintaining full control over their **data security**. 
 
 #### Main Functions and Features
 
