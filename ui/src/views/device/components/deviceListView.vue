@@ -2,8 +2,8 @@
  * @Author: shufei.han
  * @Date: 2025-06-11 12:04:48
  * @LastEditors: LPY
- * @LastEditTime: 2025-08-26 15:40:52
- * @FilePath: \glkvm-cloud\web-ui\src\views\device\components\deviceListView.vue
+ * @LastEditTime: 2025-08-29 15:06:55
+ * @FilePath: \glkvm-cloud\ui\src\views\device\components\deviceListView.vue
  * @Description: 
 -->
 <template>
@@ -29,22 +29,10 @@
                     :rowSelection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }"
                 >
                     <template #connected="{ record }">
-                        {{ 
-                            record.connected ? 
-                                (dayjs(record.connected).format('D') + $t('common.d') + ' ' +
-                                    dayjs(record.connected).format('H') + $t('common.h') + ' ' +
-                                    dayjs(record.connected).format('m') + $t('common.m') + ' ' +
-                                    dayjs(record.connected).format('s') + $t('common.s')) : ''
-                        }}
+                        {{ record.connected ? calculateWithDuration(record.connected) : '' }}
                     </template>
                     <template #uptime="{ record }">
-                        {{ 
-                            record.uptime ?
-                                (dayjs(record.uptime).format('D') + $t('common.d') + ' ' +
-                                    dayjs(record.uptime).format('H') + $t('common.h') + ' ' +
-                                    dayjs(record.uptime).format('m') + $t('common.m') + ' ' +
-                                    dayjs(record.uptime).format('s') + $t('common.s')) : ''
-                        }}
+                        {{ record.uptime ? calculateWithDuration(record.uptime) : '' }}
                     </template>
                     <template #action="{ record }">
                         <div class="flex-start">
@@ -90,7 +78,6 @@ import { useDeviceStore } from '@/stores/modules/device'
 import { message, type TableColumnType } from 'ant-design-vue'
 import { computed, reactive, ref } from 'vue'
 import ExecuteCommandDialog from './executeCommandDialog.vue'
-import dayjs from 'dayjs'
 import { DeviceInfo, ExecuteCommandFormData } from '@/models/device'
 import CommandResponseDialog from './commandResponseDialog.vue'
 
@@ -127,6 +114,16 @@ const onSelectChange = (selectedRowKeys: Key[], selectedRows: DeviceInfo[]) => {
     console.log('selectedRowKeys changed: ', selectedRowKeys)
     state.selectedRowKeys = selectedRowKeys
     state.selectedRows = selectedRows
+}
+
+/** 计算时间 */
+const calculateWithDuration = (connected: number) => {
+    const day = Math.floor(connected / (60 * 60 * 24))
+    const hour = Math.floor((connected % (60 * 60 * 24)) / (60 * 60))
+    const minute = Math.floor((connected % (60 * 60)) / (60))
+    const second = Math.floor((connected % (60)))
+
+    return `${day}${t('common.d')} ${hour}${t('common.h')} ${minute}${t('common.m')} ${second}${t('common.s')}`
 }
 
 /** 刷新列表 */
