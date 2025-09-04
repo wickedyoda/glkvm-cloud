@@ -40,7 +40,7 @@
     "refreshSuccess": "刷新成功",
     "noDevice": "无设备",
     "noDeviceTip": "您尚未添加任何设备。",
-    "addDeviceTip": "请在连接云的设备shell中运行脚本",
+    "addDeviceTip": "请在设备shell中运行以下脚本连接到云",
     "copyScript": "复制脚本",
     "username": "用户名",
     "inputUsername": "输入用户名",

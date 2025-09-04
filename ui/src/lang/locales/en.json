@@ -40,7 +40,7 @@
     "refreshSuccess": "Refresh success",
     "noDevice": "No Device",
     "noDeviceTip": "You haven't added any devices yet.",
-    "addDeviceTip": "Please run script in device shell to connected cloud",
+    "addDeviceTip": "Please run the following script in device shell to connect to the cloud",
     "copyScript": "Copy Script",
     "username": "Username",
     "inputUsername": "Input Username",
