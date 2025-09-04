@@ -2,8 +2,8 @@
  * @Author: LPY
  * @Date: 2025-05-29 18:41:20
  * @LastEditors: LPY
- * @LastEditTime: 2025-07-01 16:17:55
- * @FilePath: /kvm-cloud-frontend/src/hooks/useLanguage.ts
+ * @LastEditTime: 2025-09-04 17:01:57
+ * @FilePath: \glkvm-cloud\ui\src\hooks\useLanguage.ts
  * @Description: 语言hook
  */
 
@@ -12,11 +12,14 @@ import { languageLabelMap } from '@/models/setting'
 import { computed } from 'vue'
 import { LocalStorageKeys, useLocalStorage } from './useLocalStorage'
 import { Languages } from '@gl/main'
-import { isForeignEnv } from '@/utils'
-
 /** 语言hook */
 export default function useLanguage () {
-    const {getValue, setValue} = useLocalStorage(LocalStorageKeys.STORAGE_LANGUAGE_KEY, isForeignEnv.value ? Languages.EN : Languages.ZH)
+    // @ts-ignore
+    const browserLanguage = navigator.language || navigator.userLanguage || navigator.browserLanguage || ''
+    // 判断是否为中文
+    const isZhBrowser = browserLanguage.startsWith('zh') || browserLanguage.startsWith('ZH')
+
+    const {getValue, setValue} = useLocalStorage(LocalStorageKeys.STORAGE_LANGUAGE_KEY, isZhBrowser ? Languages.ZH : Languages.EN)
 
     const currentLang = computed(() => i18n.global.locale.value as Languages)
 
