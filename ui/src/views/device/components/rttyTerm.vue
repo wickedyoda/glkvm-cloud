@@ -2,8 +2,8 @@
  * @Author: LPY
  * @Date: 2025-08-26 11:55:49
  * @LastEditors: LPY
- * @LastEditTime: 2025-08-26 17:45:17
- * @FilePath: \glkvm-cloud\web-ui\src\views\device\components\rttyTerm.vue
+ * @LastEditTime: 2025-09-05 12:26:20
+ * @FilePath: \glkvm-cloud\ui\src\views\device\components\rttyTerm.vue
  * @Description: 
 -->
 <template>
@@ -153,7 +153,7 @@ const onContextmenuClick = (name) => {
     } else if (name === 'close') {
         emit('close', props.panelId)
     } else if (name === 'about') {
-        window.open('https://github.com/zhaojh329/rtty')
+        window.open('https://github.com/gl-inet/glkvm-cloud')
     }
 
     term.focus()
