@@ -13,6 +13,7 @@ Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailo
 -  **Batch Operations** - Batch command execution capabilities
 -  **Rapid Deployment** - Quick self-deployment with simple operations
 -  **Data Security** - Private deployment with full data control
+-  **Dedicated Bandwidth** - Exclusive bandwidth for self-hosted deployments 
 -  **Lightweight Design** - Optimized for small businesses and individual users
 
 ## Self-Hosting Guide
@@ -34,9 +35,10 @@ The following mainstream operating systems have been tested and verified
 
 |      Component      | Minimum Requirement |
 | :-----------------: | :-----------------: |
-|         CPU         |  1 cores or above   |
+|         CPU         |  1 core or above   |
 |       Memory        |       ≥ 1 GB        |
 |       Storage       |       ≥ 40 GB       |
+| Network Bandwidth   | ≥ 3 Mbps      |
 | KVM Device Firmware |      ≥ v1.5.0       |
 
 #### 🔐 Cloud Security Group Settings
