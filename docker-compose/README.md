@@ -1,14 +1,18 @@
 # Quick Start
 
-This is a simple guide for deploying **glkvm-cloud** using Docker Compose.
+ This guide shows how to deploy **glkvm-cloud** using the provided Docker Compose environment template. 
 
-1. **Copy the environment file**
+1. **Clone the repository and prepare the environment template**
 
    ```bash
+   git clone https://github.com/gl-inet/glkvm-cloud.git
+   cd glkvm-cloud/docker-compose/
    cp .env.example .env
    ```
 
-2. **Edit `.env` and update the required parameters**
+2. **Configure environment variables**
+
+   Edit `.env` and update the required parameters: 
 
    - `RTTYS_TOKEN`: device connection token (leave empty to use the default)
    - `RTTYS_PASS`: web management password (leave empty to use the default **StrongP@ssw0rd**)
