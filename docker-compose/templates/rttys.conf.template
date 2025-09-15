@@ -1,0 +1,16 @@
+# Authentication token for device connections
+token: {{RTTYS_TOKEN}}
+
+# Web management password
+password: {{RTTYS_PASS}}
+
+# WebRTC
+webrtc-ip: {{GLKVM_ACCESS_IP}}
+webrtc-port: {{TURN_PORT}}
+webrtc-username: {{TURN_USER}}
+webrtc-password: {{TURN_PASS}}
+
+# Listen addresses
+addr-dev: :{{RTTYS_DEVICE_PORT}}
+addr-user: :{{RTTYS_WEBUI_PORT}}
+addr-http-proxy: :{{RTTYS_HTTP_PROXY_PORT}}

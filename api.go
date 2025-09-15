@@ -295,15 +295,23 @@ func (srv *RttyServer) ListenAPI() error {
         host := c.Request.Host
         hostname, _, err := net.SplitHostPort(host)
         if err != nil {
-            // 没有端口时直接使用 host
-            hostname = host
+            hostname = host // Use host directly if no port
+        }
+
+        // Choose value by priority:
+        // 1) If request host is a domain (not an IP), keep it.
+        // 2) Else if it's an IP and cfg.WebrtcIP is set, use cfg.WebrtcIP.
+        // 3) Else keep the request IP.
+        chosen := hostname
+        if isIP(hostname) && cfg.WebrtcIP != "" {
+            chosen = cfg.WebrtcIP
         }
 
         c.JSON(http.StatusOK, gin.H{
-            "hostname":       hostname,
+            "hostname":       chosen, // reuse the same chosen value
             "port":           cfg.AddrDev,
             "token":          cfg.Token,
-            "webrtcIP":       cfg.WebrtcIP,
+            "webrtcIP":       chosen, // same as hostname
             "webrtcPort":     cfg.WebrtcPort,
             "webrtcUsername": cfg.WebrtcUsername,
             "webrtcPassword": cfg.WebrtcPassword,
@@ -330,6 +338,10 @@ func (srv *RttyServer) ListenAPI() error {
     log.Info().Msgf("Listen users on: %s", ln.Addr().(*net.TCPAddr))
 
     return r.RunListener(ln)
+}
+
+func isIP(addr string) bool {
+    return net.ParseIP(addr) != nil
 }
 
 func callUserHookUrl(cfg *Config, c *gin.Context) bool {

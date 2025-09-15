@@ -36,6 +36,10 @@ build-run: build run
 # Build frontend, build Go binary, and run
 full-run: ui build run
 
-# Build Docker image
-docker-build: ui build
-	docker build -t glkvm:v1 . 
+# Build Docker image without updating ui
+docker-build: build
+	docker build -t glkvm:v1 .
+
+# Full Build Docker image
+docker-fullbuild: ui build
+	docker build -t glkvm:v1 .
