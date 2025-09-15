@@ -34,3 +34,10 @@
    docker-compose down && docker-compose up -d
    ```
 
+4. **Platform Access**
+
+   Once the installation is complete, access the platform via: 
+
+    ```bash
+    https://<your_server_public_ip>
+    ```
