@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   rttys:
-    image: ${GLKVM_IMAGE:-glkvm:v1}
+    image: ${GLKVM_IMAGE:-glzhitong/glkvm-cloud:latest}
     container_name: glkvm_cloud
     restart: always
     environment:

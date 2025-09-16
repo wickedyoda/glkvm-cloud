@@ -38,8 +38,8 @@ full-run: ui build run
 
 # Build Docker image without updating ui
 docker-build: build
-	docker build -t glkvm:v1 .
+	docker build -t glkvm-cloud:build .
 
 # Full Build Docker image
 docker-fullbuild: ui build
-	docker build -t glkvm:v1 .
+	docker build -t glkvm-cloud:build .
