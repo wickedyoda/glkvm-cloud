@@ -58,11 +58,21 @@ If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.
 ------
 ### 📦 Installation
 
-Run the following command **as root** to install GLKVM Cloud:
+We provide **two** ways to install GLKVM Cloud: 
+
+#### A) One-line installer (recommended)
+
+> **Note:** The one-line installer is **Docker-based**. It automates Docker/Compose setup, pulls images, renders configs from templates, and starts services for you.
+
+Run **as root**:
 
 ```bash
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
+
+#### B) Docker manual install
+
+> Full reference: see [`docker-compose/README.md`](https://github.com/gl-inet/glkvm-cloud/blob/main/docker-compose/README.md)
 
 ### 🌐 Platform Access
 
