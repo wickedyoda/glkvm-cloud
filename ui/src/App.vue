@@ -27,8 +27,8 @@ import { computed } from 'vue'
 import { useAppStore } from './stores/modules/app'
 import { RouterView } from 'vue-router'
 import type { ThemeConfig } from 'ant-design-vue/es/config-provider/context'
-import { ConfigProvider as GlConfigProvider } from '@gl/main/components'
-import { Languages } from '@gl/main'
+import { ConfigProvider as GlConfigProvider } from 'gl-web-main/components'
+import { Languages } from 'gl-web-main'
 
 const appStore = useAppStore()
 

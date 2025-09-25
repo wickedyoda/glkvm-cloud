@@ -24,7 +24,7 @@
 
 <script setup lang="ts" generic="T extends BaseData" >
 import type { BaseTableProps } from '@/models/component'
-import { isEmpty, type BaseData } from '@gl/main'
+import { isEmpty, type BaseData } from 'gl-web-main'
 import { Table } from 'ant-design-vue'
 import { useSlots } from 'vue'
 

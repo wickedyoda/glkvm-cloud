@@ -31,9 +31,9 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { BaseModal } from '@gl/main/components'
+import { BaseModal } from 'gl-web-main/components'
 import { getAddDeviceScriptInfoApi } from '@/api/device'
-import { copyText } from '@gl/main'
+import { copyText } from 'gl-web-main'
 import { message } from 'ant-design-vue'
 import { t } from '@/hooks/useLanguage'
 

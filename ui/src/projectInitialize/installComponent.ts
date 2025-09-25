@@ -10,7 +10,7 @@ import type { App }  from 'vue'
 
 import '@/assets/iconfont/iconfont.js'
 import BaseSvg from '@/components/base/baseSvg.vue'
-import { BaseButton, BaseText } from '@gl/main/components'
+import { BaseButton, BaseText } from 'gl-web-main/components'
 
 /** 全局注册自定义组件 */
 const installComponent = function (app: App) {

@@ -7,7 +7,7 @@
  * @Description: app相关状态存储
  */
 import { LocalStorageKeys, useLocalStorage } from '@/hooks/useLocalStorage'
-import { baseTheme, createStyleInsert, darkTheme, replaceAntTheme, ThemeMode } from '@gl/main'
+import { baseTheme, createStyleInsert, darkTheme, replaceAntTheme, ThemeMode } from 'gl-web-main'
 import type { ThemeConfig } from 'ant-design-vue/es/config-provider/context'
 import { defineStore } from 'pinia'
 import { computed, reactive } from 'vue'

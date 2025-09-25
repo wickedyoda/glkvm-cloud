@@ -19,8 +19,8 @@
 </template> 
 
 <script setup lang="ts" generic="T">
-import type { SelectOptions } from '@gl/main'
-import { BaseDivider, BaseDropdownSelect } from '@gl/main/components'
+import type { SelectOptions } from 'gl-web-main'
+import { BaseDivider, BaseDropdownSelect } from 'gl-web-main/components'
 import type { Trigger } from 'ant-design-vue/es/dropdown/props'
 import { computed } from 'vue'
 

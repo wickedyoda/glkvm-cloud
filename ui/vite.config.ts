@@ -23,35 +23,35 @@ export default defineConfig(({ mode }) => {
             port: 3011,
             proxy: {
                 '/devs': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '/signin': {
-                    target: 'https://49.7.174.146:1443/',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '/signout': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '/alive': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '/get': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '^/cmd/.*': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                     secure: false,
                 },
                 '^/connect/.*': {
                     ws: true,
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                 },
                 '^/web/*': {
-                    target: 'https://49.7.174.146:1443',
+                    target: 'https://106.55.158.199',
                 },
             },
         },

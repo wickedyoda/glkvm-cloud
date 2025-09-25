@@ -7,7 +7,7 @@
  * @Description: 设置相关类型声明
  */
 
-import { Languages, SelectOptions } from '@gl/main'
+import { Languages, SelectOptions } from 'gl-web-main'
 
 /** 语言对应的label映射 */
 export const languageLabelMap = new Map<Languages, string>([

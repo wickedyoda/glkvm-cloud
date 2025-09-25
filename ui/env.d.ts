@@ -8,7 +8,7 @@
  */
 /// <reference types="vite/client" />
 
-import type { BaseButton, BaseText } from '@gl/main/components'
+import type { BaseButton, BaseText } from 'gl-web-main/components'
 import type BaseSvg from './src/components/base/baseSvg.vue'
 
 declare module 'vue' {

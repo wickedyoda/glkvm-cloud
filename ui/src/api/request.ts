@@ -9,7 +9,7 @@
 import { NotNeedHandledRequestErrorCodeList, RequestErrorCodeEnum } from '@/models/request'
 import { useUserStore } from '@/stores/modules/user'
 import { showErrorMessage } from './requestError'
-import { BaseResponse, HttpService } from '@gl/main'
+import { BaseResponse, HttpService } from 'gl-web-main'
 import type { AxiosResponse } from 'axios'
 
 export const httpService = new HttpService(

@@ -6,7 +6,7 @@
  * @FilePath: \gl-cloud-frontend\src\hooks\usePageLink.js
  * @Description: 用于处理分页相关的逻辑
  */
-import type { AnyObject, TableDataResponse } from '@gl/main'
+import type { AnyObject, TableDataResponse } from 'gl-web-main'
 import { computed, ref } from 'vue'
 
 export const GLOBAL_PAGE_SIZE = 'GLOBAL_PAGE_SIZE'

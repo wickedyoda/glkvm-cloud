@@ -47,7 +47,7 @@ import NoDevicePage from './components/noDevicePage.vue'
 import { useDeviceStore } from '@/stores/modules/device'
 import DeviceListView from './components/deviceListView.vue'
 import { reactive, onBeforeUnmount, onMounted } from 'vue'
-import { BaseLoading } from '@gl/main/components'
+import { BaseLoading } from 'gl-web-main/components'
 import AddDeviceDialog from './components/addDeviceDialog.vue'
 
 const deviceStore = useDeviceStore()
