@@ -149,9 +149,27 @@ Web UI 的默认登录密码会在安装脚本运行结束时显示：
 * `glkvm.cer`
 * `glkvm.key`
 
----
+#### 🔐 LDAP 身份认证配置（可选）
 
-#### 🔄 替换证书后重启服务
+GLKVM 轻量云支持 LDAP 身份认证，适用于企业环境，可以与现有的目录服务（如 Active Directory、OpenLDAP 或 FreeIPA）集成。
+
+**主要功能：**
+- **双重认证模式**：同时支持 LDAP 和传统密码认证
+- **基于组的授权**：限制特定 LDAP 组访问
+- **基于用户的授权**：仅允许特定用户访问
+- **TLS/SSL 支持**：加密 LDAP 连接
+- **多 LDAP 系统支持**：兼容 Active Directory、OpenLDAP、FreeIPA 和通用 LDAP 服务器
+
+**配置方法：**
+详细的 LDAP 配置选项和设置说明，请参见 [Docker Compose README](docker-compose/README.md)。
+
+**注意**：启用 LDAP 后，用户可以选择：
+- **LDAP 认证**：输入用户名和密码进行目录服务认证
+- **传统认证**：留空用户名并使用 Web 管理密码
+
+#### 🔄 配置更改后重启服务
+
+替换证书或更新 LDAP 配置后，需要重启 GLKVM 轻量云服务以应用更改：
 
 ```bash
 cd ~/glkvm_cloud
