@@ -15,6 +15,7 @@ Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailo
 -  **Data Security** - Private deployment with full data control
 -  **Dedicated Bandwidth** - Exclusive bandwidth for self-hosted deployments 
 -  **Lightweight Design** - Optimized for small businesses and individual users
+-  **Enterprise Authentication** - LDAP login support for enterprise users
 
 ## Self-Hosting Guide
 
