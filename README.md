@@ -163,9 +163,27 @@ Replace the following files in:
 
 ⚠️ **Make sure the filenames remain unchanged.**
 
-#### 🔄 Restart Services After Certificate Replacement
+#### 🔐 LDAP Authentication Configuration (Optional)
 
-After replacing the certificates, restart the GLKVM Cloud services to apply the changes:
+GLKVM Cloud supports LDAP authentication for enterprise environments, allowing you to integrate with existing directory services like Active Directory, OpenLDAP, or FreeIPA.
+
+**Key Features:**
+- **Dual Authentication Mode**: Support both LDAP and traditional password authentication simultaneously
+- **Group-based Authorization**: Restrict access to specific LDAP groups
+- **User-based Authorization**: Allow access for specific users only
+- **TLS/SSL Support**: Secure LDAP connections with encryption
+- **Multiple LDAP Systems**: Compatible with Active Directory, OpenLDAP, FreeIPA, and generic LDAP servers
+
+**Configuration:**
+For detailed LDAP configuration options and setup instructions, see the [Docker Compose README](docker-compose/README.md).
+
+**Note**: When LDAP is enabled, users can choose between:
+- **LDAP Authentication**: Enter username and password for directory service authentication
+- **Legacy Authentication**: Leave username empty and use the web management password
+
+#### 🔄 Restart Services After Configuration Changes
+
+After replacing certificates or updating LDAP configuration, restart the GLKVM Cloud services to apply the changes:
 
 ```bash
 cd ~/glkvm_cloud
