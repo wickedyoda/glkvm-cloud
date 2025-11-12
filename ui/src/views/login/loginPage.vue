@@ -1,9 +1,9 @@
 <!--
  * @Author: LPY
  * @Date: 2025-05-30 10:48:43
- * @LastEditors: CU-Jon
- * @LastEditTime: 2025-09-26 14:02:57 EDT
- * @FilePath: \glkvm-cloud\web-ui\src\views\login\loginPage.vue
+ * @LastEditors: LPY
+ * @LastEditTime: 2025-11-12 17:01:59
+ * @FilePath: \glkvm-cloud\ui\src\views\login\loginPage.vue
  * @Description: 登录页面
 -->
 <template>
@@ -13,6 +13,7 @@
                 <BaseText type="large-title-m">
                     {{ $t('login.authorizationRequired') }}
                 </BaseText>
+                
                 <!-- 认证选项帮助 - 仅在启用LDAP时显示 (Auth options help - only show when LDAP is enabled) -->
                 <div v-if="isLdapEnabled" class="auth-help-container">
                     <div 
@@ -28,7 +29,11 @@
                             style="margin-left: 8px; color: #656d76; cursor: help;"
                         >
                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.40z"/>
+                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343
+                             1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0
+                              .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655
+                              .59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009
+                              .388-1.009.40z"/>
                         </svg>
                     </div>
                     <!-- 提示框 (Tooltip) -->
@@ -72,6 +77,16 @@
             <BaseButton medium type="primary" style="width: 100%;margin-top: 16px;" :loading="state.loading" @click="handleLogin">
                 {{ $t('login.signIn') }}
             </BaseButton>
+
+            <div v-if="isOidcEnabled" class="google-login-box">
+                <a-divider style="border-color: var(--gl-color-line-divider1);color: var(--gl-color-text-level3);font-weight: normal;">
+                    {{ $t('login.or') }}
+                </a-divider>
+                <BaseButton medium class="google-login-btn" :loading="state.oidcLoading" @click="handleLoginWithOidc">
+                    <!-- <BaseSvg name="gl-icon-google" :size="20" style="margin-right: 10px;"/> -->
+                    {{ $t('login.loginWithOidc') }}
+                </BaseButton>
+            </div>
         </LoginBox>
     </BaseWhitePage>
 </template>
@@ -105,12 +120,18 @@ const isLdapEnabled = computed(() => {
     return authConfig.value?.ldapEnabled === true
 })
 
-const state = reactive<{formModel: LoginParams, loading: boolean}>({
+// 计算是否允许OIDC认证
+const isOidcEnabled = computed(() => {
+    return authConfig.value?.oidcEnabled === true
+})
+
+const state = reactive<{formModel: LoginParams, loading: boolean, oidcLoading: boolean}>({
     formModel: {
         username: '',
         password: '',
     },
     loading: false,
+    oidcLoading: false,
 })
 
 const showTooltip = ref(false)
@@ -136,7 +157,7 @@ onMounted(async () => {
     } catch (error) {
         console.error('Failed to load auth config:', error)
         // 回退 - 无LDAP可用 (Fallback - no LDAP available)
-        authConfig.value = { ldapEnabled: false, legacyPassword: true }
+        authConfig.value = { ldapEnabled: false, legacyPassword: true, oidcEnabled: false }
     }
 })
 
@@ -149,7 +170,7 @@ const handleLogin = () => {
             const loginData: LoginParams = {
                 username: state.formModel.username,
                 password: state.formModel.password,
-                authMethod: (state.formModel.username && authConfig.value?.ldapEnabled) ? 'ldap' : 'legacy'
+                authMethod: (state.formModel.username && authConfig.value?.ldapEnabled) ? 'ldap' : 'legacy',
             }
             
             await useUserStore().login(loginData)
@@ -177,6 +198,13 @@ const handleLogin = () => {
             }
         }
     })
+}
+
+// oidc登录按钮
+const handleLoginWithOidc = () => {
+    state.oidcLoading = true
+    const baseUrl = window.location.origin
+    window.location.href = `${baseUrl}/auth/oidc/login`
 }
 </script>
 
@@ -234,5 +262,24 @@ const handleLogin = () => {
       margin-bottom: 4px;
     }
   }
+}
+
+.google-login-box {
+    width: 100%;
+    
+    .google-login-btn {
+        width: 100%;
+        color: var(--gl-color-text-google);
+        background-color: var(--gl-color-bg-google);
+        border-color: var(--gl-color-line-google);
+        font-size: 14px;
+        font-weight: 500;
+        height: 40px;
+        border-radius: 64px;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 }
 </style>

@@ -1,9 +1,9 @@
 /*
  * @Author: LPY
  * @Date: 2025-06-09 16:37:00
- * @LastEditors: CU-Jon
- * @LastEditTime: 2025-09-26 14:02:57 EDT
- * @FilePath: \glkvm-cloud\web-ui\src\models\user.ts
+ * @LastEditors: LPY
+ * @LastEditTime: 2025-11-12 16:19:19
+ * @FilePath: \glkvm-cloud\ui\src\models\user.ts
  * @Description: 用户相关类型声明
  */
 
@@ -18,4 +18,5 @@ export interface LoginParams {
 export interface AuthConfig {
     ldapEnabled: boolean;
     legacyPassword: boolean;
+    oidcEnabled: boolean;
 }
