@@ -37,3 +37,4 @@ oidc-generic-auth-url: {{OIDC_AUTH_URL}}
 oidc-generic-token-url: {{OIDC_TOKEN_URL}}
 oidc-generic-redirect-url: {{OIDC_REDIRECT_URL}}
 oidc-generic-scopes: {{OIDC_SCOPES}}
+oidc-generic-allowed-users: {{OIDC_ALLOWED_USERS}}

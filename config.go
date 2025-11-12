@@ -73,6 +73,7 @@ type Config struct {
     OIDCGenericTokenURL     string
     OIDCGenericRedirectURL  string
     OIDCGenericScopes       []string
+    OIDCGenericAllowedUsers []string
 }
 
 // docker mode fixed path for reading certificate
@@ -131,6 +132,7 @@ func (cfg *Config) Parse(c *cli.Command) error {
     getFlagOpt(c, "oidc-generic-token-url", &cfg.OIDCGenericTokenURL)
     getFlagOpt(c, "oidc-generic-redirect-url", &cfg.OIDCGenericRedirectURL)
     getFlagOpt(c, "oidc-generic-scopes", &cfg.OIDCGenericScopes)
+    getFlagOpt(c, "oidc-generic-allowed-users", &cfg.OIDCGenericAllowedUsers)
 
     return nil
 }
@@ -205,14 +207,16 @@ func parseYamlCfg(cfg *Config, conf string) error {
     getConfigOpt(yamlCfg, "oidc-generic-token-url", &cfg.OIDCGenericTokenURL)
     getConfigOpt(yamlCfg, "oidc-generic-redirect-url", &cfg.OIDCGenericRedirectURL)
 
-    // YAML 尝试直接取（标量场景）
     if s, err := yamlCfg.Get("oidc-generic-scopes"); err == nil && strings.TrimSpace(s) != "" {
         cfg.OIDCGenericScopes = splitScopes(s)
     }
-
     // 默认 scopes（当启用 OIDC 且仍未设置时）
     if cfg.OIDCEnabled && len(cfg.OIDCGenericScopes) == 0 {
         cfg.OIDCGenericScopes = []string{"openid", "profile", "email"}
+    }
+
+    if s, err := yamlCfg.Get("oidc-generic-allowed-users"); err == nil && strings.TrimSpace(s) != "" {
+        cfg.OIDCGenericAllowedUsers = splitScopes(s)
     }
 
     return nil

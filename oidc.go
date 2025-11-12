@@ -12,7 +12,6 @@ import (
     "math/rand"
     "net/http"
     "net/url"
-    "os"
     "rttys/utils"
     "strings"
     "time"
@@ -30,12 +29,7 @@ func RegisterOIDCRoutes(r *gin.Engine, cfg *Config) {
     }
 
     // 初始化 session store
-    sessionSecret := os.Getenv("SESSION_SECRET")
-    if sessionSecret == "" {
-        sessionSecret = "your-secret-key-change-in-production-min-32-chars"
-        log.Info().Msgf("警告: 使用默认 SESSION_SECRET,请在生产环境中设置环境变量!")
-    }
-
+    sessionSecret := generateRandomString(32)
     oauthStore = sessions.NewCookieStore([]byte(sessionSecret))
 
     // 配置 session options
@@ -43,7 +37,6 @@ func RegisterOIDCRoutes(r *gin.Engine, cfg *Config) {
         Path:     "/",
         MaxAge:   300, // 5分钟,足够完成 OAuth 流程
         HttpOnly: true,
-        Secure:   true,                 // 如果使用 HTTPS,改为 true
         SameSite: http.SameSiteLaxMode, // 重要: 允许跨站点导航时携带 cookie
         Domain:   "",                   // 留空,自动使用当前域名
     }
@@ -174,6 +167,14 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
 
         log.Info().Msgf("OIDC login successful:  email=%s", userEmail)
 
+        // ====== OIDC 白名单校验 ======
+        if len(cfg.OIDCGenericAllowedUsers) > 0 && !isEmailAllowed(cfg.OIDCGenericAllowedUsers, userEmail) {
+            log.Warn().Msgf("OIDC user not in whitelist: email=%s", userEmail)
+            // 可区分授权失败类型
+            c.Redirect(http.StatusFound, "/?error=authorization")
+            return
+        }
+
         // 创建应用会话（复用现有的session系统）
         sid := utils.GenUniqueID()
         httpSessions.Set(sid, gin.H{
@@ -221,6 +222,7 @@ func exchangeCodeForTokens(cfg *Config, code string) (map[string]interface{}, er
         return nil, err
     }
 
+    log.Info().Msgf("OIDC exchange code for tokens successful:  %s", body)
     if resp.StatusCode != http.StatusOK {
         return nil, fmt.Errorf("token request failed: %s", string(body))
     }
@@ -258,4 +260,34 @@ func generateRandomString(length int) string {
     b := make([]byte, length)
     rand.Read(b)
     return base64.URLEncoding.EncodeToString(b)[:length]
+}
+
+// 允许的邮箱白名单检查：
+// - 完全匹配（不区分大小写）
+// - 简单域名匹配：条目以 "@example.com" 或 "*@example.com" 开头时，表示允许该域名下所有邮箱
+func isEmailAllowed(allowed []string, email string) bool {
+    if len(allowed) == 0 {
+        return true
+    }
+    e := strings.ToLower(strings.TrimSpace(email))
+    for _, raw := range allowed {
+        a := strings.ToLower(strings.TrimSpace(raw))
+        if a == "" {
+            continue
+        }
+        if strings.HasPrefix(a, "*@") || strings.HasPrefix(a, "@") {
+            // 域匹配
+            dom := strings.TrimPrefix(a, "*@")
+            dom = strings.TrimPrefix(dom, "@")
+            if strings.HasSuffix(e, "@"+dom) {
+                return true
+            }
+            continue
+        }
+        // 完全匹配
+        if e == a {
+            return true
+        }
+    }
+    return false
 }
