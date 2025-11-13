@@ -22,41 +22,41 @@ var (
     oauthStore *sessions.CookieStore
 )
 
-// 注册OIDC路由
+// Register OIDC routes
 func RegisterOIDCRoutes(r *gin.Engine, cfg *Config) {
     if !cfg.OIDCEnabled {
         return
     }
 
-    // 初始化 session store
+    // Initialize session store
     sessionSecret := generateRandomString(32)
     oauthStore = sessions.NewCookieStore([]byte(sessionSecret))
 
-    // 配置 session options
+    // Configure session options
     oauthStore.Options = &sessions.Options{
         Path:     "/",
-        MaxAge:   300, // 5分钟,足够完成 OAuth 流程
+        MaxAge:   300, // 5 minutes, enough to complete the OAuth flow
         HttpOnly: true,
-        SameSite: http.SameSiteLaxMode, // 重要: 允许跨站点导航时携带 cookie
-        Domain:   "",                   // 留空,自动使用当前域名
+        SameSite: http.SameSiteLaxMode, // Important: allow cookies on cross-site navigation (OIDC redirect)
+        Domain:   "",                   // Empty means current host/domain will be used
     }
 
-    // OIDC认证路由（不需要认证）
+    // OIDC auth routes (public, no existing auth required)
     r.GET("/auth/oidc/login", oidcLoginHandler(cfg))
     r.GET("/auth/oidc/callback", oidcCallbackHandler(cfg))
 }
 
-// 发起OIDC登录
+// Start OIDC login
 func oidcLoginHandler(cfg *Config) gin.HandlerFunc {
     return func(c *gin.Context) {
 
-        // 生成state和nonce
+        // Generate state and nonce
         nonce := generateRandomString(32)
         state := generateRandomString(32)
 
         log.Info().Msgf("OIDC login initiated: nonce=%s, state=%s...", nonce[:10], state[:10])
 
-        // 保存到session
+        // Save to session
         session, _ := oauthStore.Get(c.Request, "oidc-session")
         session.Values["state"] = state
         session.Values["nonce"] = nonce
@@ -67,7 +67,7 @@ func oidcLoginHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 构建授权URL
+        // Build authorization URL
         params := url.Values{}
         params.Add("client_id", cfg.OIDCGenericClientID)
         params.Add("redirect_uri", cfg.OIDCGenericRedirectURL)
@@ -82,10 +82,10 @@ func oidcLoginHandler(cfg *Config) gin.HandlerFunc {
     }
 }
 
-// 处理OIDC回调
+// Handle OIDC callback
 func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
     return func(c *gin.Context) {
-        // 获取session
+        // Get session
         session, err := oauthStore.Get(c.Request, "oidc-session")
         if err != nil {
             log.Error().Err(err).Msg("Failed to get OIDC session")
@@ -93,7 +93,7 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 验证state
+        // Validate state
         state := c.Query("state")
         savedState, ok := session.Values["state"].(string)
         if !ok || state != savedState {
@@ -102,7 +102,7 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 检查OAuth错误
+        // Check OAuth error
         if errorMsg := c.Query("error"); errorMsg != "" {
             errorDesc := c.Query("error_description")
             log.Warn().Msgf("OIDC error: %s - %s", errorMsg, errorDesc)
@@ -110,14 +110,14 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 获取授权码
+        // Read authorization code
         code := c.Query("code")
         if code == "" {
             c.Redirect(http.StatusFound, "/?error=no_code")
             return
         }
 
-        // 用授权码换取token
+        // Exchange authorization code for tokens
         tokens, err := exchangeCodeForTokens(cfg, code)
         if err != nil {
             log.Error().Err(err).Msg("Failed to exchange code for tokens")
@@ -125,11 +125,11 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 获取用户信息
+        // Extract user info
         var userEmail string
         var userName string
 
-        // 标准OIDC - 从ID token解析
+        // Standard OIDC – parse from ID token
         idToken, ok := tokens["id_token"].(string)
         if !ok {
             log.Error().Msg("No ID token in response")
@@ -144,7 +144,7 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
-        // 验证nonce
+        // Validate nonce
         if savedNonce, ok := session.Values["nonce"].(string); ok {
             if claims["nonce"] != savedNonce {
                 log.Warn().Msg("OIDC nonce mismatch")
@@ -167,15 +167,15 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
 
         log.Info().Msgf("OIDC login successful:  email=%s", userEmail)
 
-        // ====== OIDC 白名单校验 ======
+        // ====== OIDC whitelist enforcement ======
         if len(cfg.OIDCGenericAllowedUsers) > 0 && !isEmailAllowed(cfg.OIDCGenericAllowedUsers, userEmail) {
             log.Warn().Msgf("OIDC user not in whitelist: email=%s", userEmail)
-            // 可区分授权失败类型
+            // Differentiate authorization failure types on frontend via error code
             c.Redirect(http.StatusFound, "/?error=authorization")
             return
         }
 
-        // 创建应用会话（复用现有的session系统）
+        // Create application session
         sid := utils.GenUniqueID()
         httpSessions.Set(sid, gin.H{
             "email": userEmail,
@@ -185,16 +185,16 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
 
         c.SetCookie("sid", sid, 0, "", "", cfg.SslCert != "", true)
 
-        // 清理OAuth session
+        // Clean up OAuth session
         session.Options.MaxAge = -1
         session.Save(c.Request, c.Writer)
 
-        // 重定向到首页
+        // Redirect to home page
         c.Redirect(http.StatusFound, "/")
     }
 }
 
-// 用授权码换取token
+// Exchange authorization code for tokens
 func exchangeCodeForTokens(cfg *Config, code string) (map[string]interface{}, error) {
     data := url.Values{}
     data.Set("code", code)
@@ -235,7 +235,7 @@ func exchangeCodeForTokens(cfg *Config, code string) (map[string]interface{}, er
     return result, nil
 }
 
-// 解析ID Token（简化版，不验证签名）
+// Parse ID Token
 func parseIDToken(idToken string) (map[string]interface{}, error) {
     parts := strings.Split(idToken, ".")
     if len(parts) != 3 {
@@ -255,16 +255,17 @@ func parseIDToken(idToken string) (map[string]interface{}, error) {
     return claims, nil
 }
 
-// 生成随机字符串
+// Generate a random string with given length
 func generateRandomString(length int) string {
     b := make([]byte, length)
     rand.Read(b)
     return base64.URLEncoding.EncodeToString(b)[:length]
 }
 
-// 允许的邮箱白名单检查：
-// - 完全匹配（不区分大小写）
-// - 简单域名匹配：条目以 "@example.com" 或 "*@example.com" 开头时，表示允许该域名下所有邮箱
+// Email whitelist check rules:
+// - Exact match (case-insensitive)
+// - Simple domain match: entries starting with "@example.com" or "*@example.com"
+//   mean "allow all users under this domain"
 func isEmailAllowed(allowed []string, email string) bool {
     if len(allowed) == 0 {
         return true
@@ -276,7 +277,7 @@ func isEmailAllowed(allowed []string, email string) bool {
             continue
         }
         if strings.HasPrefix(a, "*@") || strings.HasPrefix(a, "@") {
-            // 域匹配
+            // Domain match
             dom := strings.TrimPrefix(a, "*@")
             dom = strings.TrimPrefix(dom, "@")
             if strings.HasSuffix(e, "@"+dom) {
@@ -284,7 +285,7 @@ func isEmailAllowed(allowed []string, email string) bool {
             }
             continue
         }
-        // 完全匹配
+        // Exact match
         if e == a {
             return true
         }

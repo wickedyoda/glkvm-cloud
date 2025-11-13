@@ -53,7 +53,7 @@ type Config struct {
     WebrtcPort           string
     WebrtcUsername       string
     WebrtcPassword       string
-    // LDAP配置 (LDAP Configuration)
+    // // LDAP Configuration
     LdapEnabled       bool
     LdapServer        string
     LdapPort          int
@@ -65,7 +65,7 @@ type Config struct {
     LdapAllowedGroups string
     LdapAllowedUsers  string
 
-    // 通用OIDC Provider（支持任何标准OIDC提供商）
+    // Generic OIDC Provider (supports any standard OIDC provider)
     OIDCEnabled             bool
     OIDCGenericClientID     string
     OIDCGenericClientSecret string
@@ -112,7 +112,7 @@ func (cfg *Config) Parse(c *cli.Command) error {
     getFlagOpt(c, "webrtc-username", &cfg.WebrtcUsername)
     getFlagOpt(c, "webrtc-password", &cfg.WebrtcPassword)
 
-    // LDAP配置标志 (LDAP Configuration flags)
+    // LDAP configuration flags
     getFlagOpt(c, "ldap-enabled", &cfg.LdapEnabled)
     getFlagOpt(c, "ldap-server", &cfg.LdapServer)
     getFlagOpt(c, "ldap-port", &cfg.LdapPort)
@@ -124,7 +124,7 @@ func (cfg *Config) Parse(c *cli.Command) error {
     getFlagOpt(c, "ldap-allowed-groups", &cfg.LdapAllowedGroups)
     getFlagOpt(c, "ldap-allowed-users", &cfg.LdapAllowedUsers)
 
-    // 通用OIDC Provider（支持任何标准OIDC提供商）
+    // Generic OIDC Provider (standard OIDC provider flags)
     getFlagOpt(c, "oidc-enabled", &cfg.OIDCEnabled)
     getFlagOpt(c, "oidc-generic-client-id", &cfg.OIDCGenericClientID)
     getFlagOpt(c, "oidc-generic-client-secret", &cfg.OIDCGenericClientSecret)
@@ -183,7 +183,7 @@ func parseYamlCfg(cfg *Config, conf string) error {
     getConfigOpt(yamlCfg, "ldap-port", &cfg.LdapPort)
     getConfigOpt(yamlCfg, "ldap-use-tls", &cfg.LdapUseTLS)
     getConfigOpt(yamlCfg, "ldap-bind-dn", &cfg.LdapBindDN)
-    // 注意：为了避免特殊字符解析问题和提高安全性，ldap-bind-password故意不从YAML读取
+
     // Note: ldap-bind-password is intentionally not read from YAML to avoid special character parsing issues and for security.
     // It's always read directly from the LDAP_BIND_PASSWORD environment variable below
     getConfigOpt(yamlCfg, "ldap-base-dn", &cfg.LdapBaseDN)
@@ -191,14 +191,13 @@ func parseYamlCfg(cfg *Config, conf string) error {
     getConfigOpt(yamlCfg, "ldap-allowed-groups", &cfg.LdapAllowedGroups)
     getConfigOpt(yamlCfg, "ldap-allowed-users", &cfg.LdapAllowedUsers)
 
-    // LDAP密码始终从环境变量读取以避免YAML特殊字符解析问题和提高安全性
     // LDAP password is always read from environment variable to avoid YAML special character parsing issues and for security.
     if envPassword := os.Getenv("LDAP_BIND_PASSWORD"); envPassword != "" {
         cfg.LdapBindPassword = envPassword
     }
 
-    // ===== OIDC 配置 (generic OIDC provider) =====
-    // 开关与基本端点
+    // ===== OIDC configuration (generic OIDC provider) =====
+    // Switch and basic endpoints
     getConfigOpt(yamlCfg, "oidc-enabled", &cfg.OIDCEnabled)
     getConfigOpt(yamlCfg, "oidc-generic-client-id", &cfg.OIDCGenericClientID)
     getConfigOpt(yamlCfg, "oidc-generic-client-secret", &cfg.OIDCGenericClientSecret)
@@ -207,14 +206,16 @@ func parseYamlCfg(cfg *Config, conf string) error {
     getConfigOpt(yamlCfg, "oidc-generic-token-url", &cfg.OIDCGenericTokenURL)
     getConfigOpt(yamlCfg, "oidc-generic-redirect-url", &cfg.OIDCGenericRedirectURL)
 
+    // OIDC scopes (string can be space- or comma-separated, parsed by splitScopes)
     if s, err := yamlCfg.Get("oidc-generic-scopes"); err == nil && strings.TrimSpace(s) != "" {
         cfg.OIDCGenericScopes = splitScopes(s)
     }
-    // 默认 scopes（当启用 OIDC 且仍未设置时）
+    // Default scopes (when OIDC is enabled but scopes are still empty)
     if cfg.OIDCEnabled && len(cfg.OIDCGenericScopes) == 0 {
         cfg.OIDCGenericScopes = []string{"openid", "profile", "email"}
     }
 
+    // Allowed users (whitelist) for OIDC logins, parsed via splitScopes
     if s, err := yamlCfg.Get("oidc-generic-allowed-users"); err == nil && strings.TrimSpace(s) != "" {
         cfg.OIDCGenericAllowedUsers = splitScopes(s)
     }
@@ -237,11 +238,12 @@ func getFlagOpt(c *cli.Command, name string, opt any) {
     }
 }
 
-// splitScopes 把空格/逗号/换行分隔的 scopes 拆成去重、去空的列表
+// splitScopes splits a whitespace/comma/newline-separated scope string
+// into a deduplicated, cleaned string slice.
 func splitScopes(s string) []string {
-    // 先把逗号替换为空格，便于统一拆分
+    // Replace commas with spaces to unify delimiters
     s = strings.ReplaceAll(s, ",", " ")
-    // 去掉 YAML 列表里可能的方括号等符号（宽容处理）
+    // Remove optional YAML list characters such as brackets (lenient parsing)
     s = strings.NewReplacer("[", " ", "]", " ").Replace(s)
 
     parts := strings.Fields(s)
@@ -249,7 +251,7 @@ func splitScopes(s string) []string {
     seen := make(map[string]struct{}, len(parts))
     for _, p := range parts {
         p = strings.TrimSpace(p)
-        if p == "" || p == "-" { // 兼容误拷的 "-"
+        if p == "" || p == "-" { // Support accidental "-" items
             continue
         }
         if _, ok := seen[p]; ok {
