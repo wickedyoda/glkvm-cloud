@@ -27,6 +27,7 @@ package main
 import (
     "crypto/tls"
     "embed"
+    "io/fs"
     "net"
     "net/http"
     "path"
@@ -276,14 +277,12 @@ func (srv *RttyServer) ListenAPI() error {
 
     // ===== 添加OIDC路由 =====
     RegisterOIDCRoutes(r, cfg)
+    fs, err := fs.Sub(staticFs, "ui/dist")
+    if err != nil {
+        return err
+    }
 
-    //fs, err := fs.Sub(staticFs, "ui/dist")
-    //if err != nil {
-    //    return err
-    //}
-
-    //root := http.FS(fs)
-    root := http.Dir("/home/ui/dist")
+    root := http.FS(fs)
     fh := http.FileServer(root)
 
     r.NoRoute(func(c *gin.Context) {

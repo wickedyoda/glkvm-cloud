@@ -197,6 +197,22 @@ func main() {
                 Value: "openid profile email",
                 Usage: "space-separated list of OIDC scopes",
             },
+            &cli.StringFlag{
+                Name:  "oidc-generic-allowed-users",
+                Usage: "optional email whitelist for OIDC logins (exact emails or @domain, space/comma-separated)",
+            },
+            &cli.StringFlag{
+                Name:  "oidc-generic-allowed-subs",
+                Usage: "optional subject (sub) whitelist for OIDC logins (space/comma-separated)",
+            },
+            &cli.StringFlag{
+                Name:  "oidc-generic-allowed-usernames",
+                Usage: "optional username whitelist for OIDC logins (preferred_username/name, space/comma-separated)",
+            },
+            &cli.StringFlag{
+                Name:  "oidc-generic-allowed-groups",
+                Usage: "optional groups whitelist for OIDC logins (space/comma-separated)",
+            },
 
             &cli.BoolFlag{
                 Name:    "verbose",

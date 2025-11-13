@@ -41,4 +41,9 @@ oidc-generic-auth-url: {{OIDC_AUTH_URL}}
 oidc-generic-token-url: {{OIDC_TOKEN_URL}}
 oidc-generic-redirect-url: {{OIDC_REDIRECT_URL}}
 oidc-generic-scopes: {{OIDC_SCOPES}}
+
+# Whitelists (all are optional)
 oidc-generic-allowed-users: {{OIDC_ALLOWED_USERS}}
+oidc-generic-allowed-subs: {{OIDC_ALLOWED_SUBS}}
+oidc-generic-allowed-usernames: {{OIDC_ALLOWED_USERNAMES}}
+oidc-generic-allowed-groups: {{OIDC_ALLOWED_GROUPS}}

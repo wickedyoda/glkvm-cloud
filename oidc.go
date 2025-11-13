@@ -33,13 +33,17 @@ func RegisterOIDCRoutes(r *gin.Engine, cfg *Config) {
     }
 
     // ===== Initialize OIDC provider & ID token verifier =====
-    if cfg.OIDCGenericIssuer == "" {
+    issuer := strings.TrimSpace(cfg.OIDCGenericIssuer)
+    if issuer == "" {
         log.Error().Msg("OIDC is enabled but issuer (OIDCGenericIssuer) is empty")
         return
     }
 
     ctx := context.Background()
-    provider, err := oidc.NewProvider(ctx, cfg.OIDCGenericIssuer)
+    //// Normalize issuer to always end with a single '/'
+    //issuer = strings.TrimRight(issuer, "/") + "/"
+    cfg.OIDCGenericIssuer = issuer
+    provider, err := oidc.NewProvider(ctx, issuer)
     if err != nil {
         log.Error().Err(err).Msg("Failed to initialize OIDC provider")
         return
@@ -181,6 +185,15 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             return
         }
 
+        // Pretty-print all claims as JSON for debugging
+        if claimsJSON, err := json.MarshalIndent(claims, "", "  "); err == nil {
+            log.Info().Msg("========== OIDC ID Token Claims ==========")
+            log.Info().Msg(string(claimsJSON))
+            log.Info().Msg("==========================================")
+        } else {
+            log.Warn().Err(err).Msg("Failed to marshal OIDC claims to JSON")
+        }
+
         // Validate nonce
         if savedNonce, ok := session.Values["nonce"].(string); ok {
             if claims["nonce"] != savedNonce {
@@ -190,14 +203,21 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
             }
         }
 
+        sub, _ := claims["sub"].(string)
         userEmail, _ = claims["email"].(string)
         userName, _ = claims["name"].(string)
         if userName == "" {
-            userName = userEmail
+            // Fallback: use email or sub as display name
+            if userEmail != "" {
+                userName = userEmail
+            } else {
+                userName = sub
+            }
         }
 
-        if err != nil || userEmail == "" {
-            log.Error().Err(err).Msg("Failed to get user info")
+        // sub is required by OIDC spec and should never be empty
+        if sub == "" {
+            log.Error().Msg("OIDC token is missing 'sub' claim")
             c.Redirect(http.StatusFound, "/?error=user_info_failed")
             return
         }
@@ -205,9 +225,8 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
         log.Info().Msgf("OIDC login successful:  email=%s", userEmail)
 
         // ====== OIDC whitelist enforcement ======
-        if len(cfg.OIDCGenericAllowedUsers) > 0 && !isEmailAllowed(cfg.OIDCGenericAllowedUsers, userEmail) {
-            log.Warn().Msgf("OIDC user not in whitelist: email=%s", userEmail)
-            // Differentiate authorization failure types on frontend via error code
+        if !isOIDCUserAllowed(cfg, claims) {
+            log.Warn().Msgf("OIDC user not allowed by whitelist rules, sub=%v, email=%v", claims["sub"], claims["email"])
             c.Redirect(http.StatusFound, "/?error=authorization")
             return
         }
@@ -259,7 +278,6 @@ func exchangeCodeForTokens(cfg *Config, code string) (map[string]interface{}, er
         return nil, err
     }
 
-    log.Info().Msgf("OIDC exchange code for tokens successful:  %s", body)
     if resp.StatusCode != http.StatusOK {
         return nil, fmt.Errorf("token request failed: %s", string(body))
     }
@@ -272,31 +290,53 @@ func exchangeCodeForTokens(cfg *Config, code string) (map[string]interface{}, er
     return result, nil
 }
 
-// Parse ID Token
-func parseIDToken(idToken string) (map[string]interface{}, error) {
-    parts := strings.Split(idToken, ".")
-    if len(parts) != 3 {
-        return nil, fmt.Errorf("invalid token format")
-    }
-
-    payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-    if err != nil {
-        return nil, err
-    }
-
-    var claims map[string]interface{}
-    if err := json.Unmarshal(payload, &claims); err != nil {
-        return nil, err
-    }
-
-    return claims, nil
-}
-
 // Generate a random string with given length
 func generateRandomString(length int) string {
     b := make([]byte, length)
     rand.Read(b)
     return base64.URLEncoding.EncodeToString(b)[:length]
+}
+
+func isOIDCUserAllowed(cfg *Config, claims map[string]interface{}) bool {
+    email, _ := claims["email"].(string)
+    sub, _ := claims["sub"].(string)
+    preferredUsername, _ := claims["preferred_username"].(string)
+    name, _ := claims["name"].(string)
+
+    // 1) Email whitelist
+    if len(cfg.OIDCGenericAllowedUsers) > 0 {
+        if !isEmailAllowed(cfg.OIDCGenericAllowedUsers, email) {
+            return false
+        }
+    }
+
+    // 2) Sub (subject) whitelist
+    if len(cfg.OIDCGenericAllowedSubs) > 0 {
+        if !contains(cfg.OIDCGenericAllowedSubs, sub) {
+            return false
+        }
+    }
+
+    // 3) Username whitelist (preferred_username > name)
+    if len(cfg.OIDCGenericAllowedUsernames) > 0 {
+        u := preferredUsername
+        if u == "" {
+            u = name
+        }
+        if !contains(cfg.OIDCGenericAllowedUsernames, u) {
+            return false
+        }
+    }
+
+    // 4) Groups whitelist
+    if len(cfg.OIDCGenericAllowedGroups) > 0 {
+        groups := extractStringSlice(claims["groups"])
+        if !intersects(groups, cfg.OIDCGenericAllowedGroups) {
+            return false
+        }
+    }
+
+    return true
 }
 
 // Email whitelist check rules:
@@ -327,5 +367,110 @@ func isEmailAllowed(allowed []string, email string) bool {
             return true
         }
     }
+    return false
+}
+
+// contains reports whether slice contains the given value v.
+// Comparison is done after trimming spaces on both sides.
+func contains(slice []string, v string) bool {
+    v = strings.TrimSpace(v)
+    if v == "" {
+        return false
+    }
+    for _, s := range slice {
+        if strings.TrimSpace(s) == v {
+            return true
+        }
+    }
+    return false
+}
+
+// extractStringSlice tries to normalize a generic claim value into a []string.
+//
+// It supports:
+//   - []string
+//   - []interface{} (only string elements are kept)
+//   - string (split by comma and/or whitespace)
+// Any other type will result in an empty slice.
+func extractStringSlice(v interface{}) []string {
+    if v == nil {
+        return nil
+    }
+
+    switch vv := v.(type) {
+    case []string:
+        // Return a shallow copy to avoid accidental modification.
+        out := make([]string, 0, len(vv))
+        for _, s := range vv {
+            s = strings.TrimSpace(s)
+            if s != "" {
+                out = append(out, s)
+            }
+        }
+        return out
+
+    case []interface{}:
+        out := make([]string, 0, len(vv))
+        for _, item := range vv {
+            s, ok := item.(string)
+            if !ok {
+                continue
+            }
+            s = strings.TrimSpace(s)
+            if s != "" {
+                out = append(out, s)
+            }
+        }
+        return out
+
+    case string:
+        // Allow comma- or whitespace-separated group lists.
+        s := strings.TrimSpace(vv)
+        if s == "" {
+            return nil
+        }
+        // Replace commas with spaces, then split on whitespace.
+        s = strings.ReplaceAll(s, ",", " ")
+        parts := strings.Fields(s)
+        out := make([]string, 0, len(parts))
+        for _, p := range parts {
+            p = strings.TrimSpace(p)
+            if p != "" {
+                out = append(out, p)
+            }
+        }
+        return out
+
+    default:
+        return nil
+    }
+}
+
+// intersects reports whether slice a and b share at least one common element.
+// Matching is done after trimming spaces on both sides.
+func intersects(a, b []string) bool {
+    if len(a) == 0 || len(b) == 0 {
+        return false
+    }
+
+    m := make(map[string]struct{}, len(a))
+    for _, s := range a {
+        s = strings.TrimSpace(s)
+        if s == "" {
+            continue
+        }
+        m[s] = struct{}{}
+    }
+
+    for _, s := range b {
+        s = strings.TrimSpace(s)
+        if s == "" {
+            continue
+        }
+        if _, ok := m[s]; ok {
+            return true
+        }
+    }
+
     return false
 }

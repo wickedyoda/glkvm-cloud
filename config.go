@@ -66,15 +66,18 @@ type Config struct {
     LdapAllowedUsers  string
 
     // Generic OIDC Provider (supports any standard OIDC provider)
-    OIDCEnabled             bool
-    OIDCGenericClientID     string
-    OIDCGenericClientSecret string
-    OIDCGenericAuthURL      string
-    OIDCGenericTokenURL     string
-    OIDCGenericRedirectURL  string
-    OIDCGenericScopes       []string
-    OIDCGenericAllowedUsers []string
-    OIDCGenericIssuer       string
+    OIDCEnabled                 bool
+    OIDCGenericIssuer           string
+    OIDCGenericClientID         string
+    OIDCGenericClientSecret     string
+    OIDCGenericAuthURL          string
+    OIDCGenericTokenURL         string
+    OIDCGenericRedirectURL      string
+    OIDCGenericScopes           []string
+    OIDCGenericAllowedUsers     []string
+    OIDCGenericAllowedSubs      []string
+    OIDCGenericAllowedUsernames []string
+    OIDCGenericAllowedGroups    []string
 }
 
 // docker mode fixed path for reading certificate
@@ -135,6 +138,9 @@ func (cfg *Config) Parse(c *cli.Command) error {
     getFlagOpt(c, "oidc-generic-redirect-url", &cfg.OIDCGenericRedirectURL)
     getFlagOpt(c, "oidc-generic-scopes", &cfg.OIDCGenericScopes)
     getFlagOpt(c, "oidc-generic-allowed-users", &cfg.OIDCGenericAllowedUsers)
+    getFlagOpt(c, "oidc-generic-allowed-subs", &cfg.OIDCGenericAllowedSubs)
+    getFlagOpt(c, "oidc-generic-allowed-usernames", &cfg.OIDCGenericAllowedUsernames)
+    getFlagOpt(c, "oidc-generic-allowed-groups", &cfg.OIDCGenericAllowedGroups)
 
     return nil
 }
@@ -224,9 +230,25 @@ func parseYamlCfg(cfg *Config, conf string) error {
         cfg.OIDCGenericScopes = []string{"openid", "profile", "email"}
     }
 
-    // Allowed users (whitelist) for OIDC logins, parsed via splitScopes
+    // Whitelists for OIDC logins, all parsed via splitScopes (space/comma/newline separated)
+    // 1) Email-based whitelist
     if s, err := yamlCfg.Get("oidc-generic-allowed-users"); err == nil && strings.TrimSpace(s) != "" {
         cfg.OIDCGenericAllowedUsers = splitScopes(s)
+    }
+
+    // 2) Subject (sub) whitelist
+    if s, err := yamlCfg.Get("oidc-generic-allowed-subs"); err == nil && strings.TrimSpace(s) != "" {
+        cfg.OIDCGenericAllowedSubs = splitScopes(s)
+    }
+
+    // 3) Username whitelist (preferred_username / name)
+    if s, err := yamlCfg.Get("oidc-generic-allowed-usernames"); err == nil && strings.TrimSpace(s) != "" {
+        cfg.OIDCGenericAllowedUsernames = splitScopes(s)
+    }
+
+    // 4) Groups whitelist
+    if s, err := yamlCfg.Get("oidc-generic-allowed-groups"); err == nil && strings.TrimSpace(s) != "" {
+        cfg.OIDCGenericAllowedGroups = splitScopes(s)
     }
 
     return nil
