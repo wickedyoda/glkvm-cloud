@@ -15,7 +15,7 @@ Self-Deployed Lightweight Cloud is a lightweight KVM remote cloud platform tailo
 -  **Data Security** - Private deployment with full data control
 -  **Dedicated Bandwidth** - Exclusive bandwidth for self-hosted deployments 
 -  **Lightweight Design** - Optimized for small businesses and individual users
--  **Enterprise Authentication** - LDAP login support for enterprise users
+-  **Enterprise Authentication** -  Supports both **LDAP** and **OIDC** login methods for enterprise users. 
 
 ## Self-Hosting Guide
 
@@ -181,6 +181,30 @@ For detailed LDAP configuration options and setup instructions, see the [Docker 
 **Note**: When LDAP is enabled, users can choose between:
 - **LDAP Authentication**: Enter username and password for directory service authentication
 - **Legacy Authentication**: Leave username empty and use the web management password
+
+#### 🔐 OIDC Authentication Configuration (Optional)
+
+GLKVM Cloud provides full support for **OIDC (OpenID Connect)** authentication, allowing seamless integration with modern identity providers such as **Google, Auth0, Authing** and any other standard-compliant OIDC provider.
+
+ **Key Features**
+
+- **Modern Authentication**
+   Secure sign-in through any OIDC provider supporting Authorization Code Flow.
+- **Email / Username / Group Whitelisting**
+   Restrict access based on:
+  - Email or domain (e.g. *@example.com*)
+  - Stable user ID (*sub*)
+  - Username (*preferred_username* or *name*)
+  - Groups attribute
+- **Full OpenID Connect Compliance**
+   Supports issuer validation, token signature verification, and nonce protection.
+- **Flexible Provider Support**
+   Works with public clouds (Google, Azure AD, Auth0, Okta) and self-hosted solutions.
+
+ **Configuration**
+
+For detailed OIDC configuration options and setup instructions, see the
+ **[Docker Compose README](docker-compose/README.md)**.
 
 #### 🔄 Restart Services After Configuration Changes
 
