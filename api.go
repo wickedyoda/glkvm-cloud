@@ -215,65 +215,68 @@ func (srv *RttyServer) ListenAPI() error {
         c.Status(http.StatusOK)
     })
 
-	r.POST("/signin", func(c *gin.Context) {
-		type credentials struct {
-			Username   string `json:"username"`
-			Password   string `json:"password"`
-			AuthMethod string `json:"authMethod"`
-		}
+    r.POST("/signin", func(c *gin.Context) {
+        type credentials struct {
+            Username   string `json:"username"`
+            Password   string `json:"password"`
+            AuthMethod string `json:"authMethod"`
+        }
 
-		creds := credentials{}
+        creds := credentials{}
 
-		err := c.BindJSON(&creds)
-		if err != nil {
-			c.Status(http.StatusBadRequest)
-			return
-		}
+        err := c.BindJSON(&creds)
+        if err != nil {
+            c.Status(http.StatusBadRequest)
+            return
+        }
 
-		// 自动确定认证方法或使用指定的方法 (Auto-determine auth method or use specified method)
-		authMethod := creds.AuthMethod
-		if authMethod == "" {
-			// 基于是否提供用户名进行自动检测 (Auto-detect based on whether username is provided)
-			if creds.Username != "" && cfg.LdapEnabled {
-				authMethod = "ldap"
-			} else {
-				authMethod = "legacy"
-			}
-		}
+        // 自动确定认证方法或使用指定的方法 (Auto-determine auth method or use specified method)
+        authMethod := creds.AuthMethod
+        if authMethod == "" {
+            // 基于是否提供用户名进行自动检测 (Auto-detect based on whether username is provided)
+            if creds.Username != "" && cfg.LdapEnabled {
+                authMethod = "ldap"
+            } else {
+                authMethod = "legacy"
+            }
+        }
 
-		success, errorType := AuthenticateUserWithError(cfg, creds.Username, creds.Password, authMethod)
-		if success {
-			sid := utils.GenUniqueID()
-			httpSessions.Set(sid, true, cache.WithEx(httpSessionExpire))
-			c.SetCookie("sid", sid, 0, "", "", false, true)
-			c.Status(http.StatusOK)
-			return
-		}
+        success, errorType := AuthenticateUserWithError(cfg, creds.Username, creds.Password, authMethod)
+        if success {
+            sid := utils.GenUniqueID()
+            httpSessions.Set(sid, true, cache.WithEx(httpSessionExpire))
+            c.SetCookie("sid", sid, 0, "", "", false, true)
+            c.Status(http.StatusOK)
+            return
+        }
 
-		// 根据错误类型返回适当的错误信息 (Return appropriate error message based on error type)
-		if errorType == "authorization" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authorized"})
-		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed"})
-		}
-	})
+        // 根据错误类型返回适当的错误信息 (Return appropriate error message based on error type)
+        if errorType == "authorization" {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authorized"})
+        } else {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed"})
+        }
+    })
 
-	r.GET("/auth-config", func(c *gin.Context) {
-		authConfig := gin.H{
-			"ldapEnabled":     cfg.LdapEnabled,
-			"legacyPassword":  cfg.Password != "",
-		}
-		c.JSON(http.StatusOK, authConfig)
-	})
+    r.GET("/auth-config", func(c *gin.Context) {
+        authConfig := gin.H{
+            "ldapEnabled":    cfg.LdapEnabled,
+            "legacyPassword": cfg.Password != "",
+            "oidcEnabled":    cfg.OIDCEnabled,
+        }
+        c.JSON(http.StatusOK, authConfig)
+    })
 
-	r.GET("/alive", func(c *gin.Context) {
-		if !httpAuth(cfg, c) {
-			c.AbortWithStatus(http.StatusUnauthorized)
-		} else {
-			c.Status(http.StatusOK)
-		}
-	})
+    r.GET("/alive", func(c *gin.Context) {
+        if !httpAuth(cfg, c) {
+            c.AbortWithStatus(http.StatusUnauthorized)
+        } else {
+            c.Status(http.StatusOK)
+        }
+    })
 
+    // ===== 添加OIDC路由 =====
+    RegisterOIDCRoutes(r, cfg)
     fs, err := fs.Sub(staticFs, "ui/dist")
     if err != nil {
         return err
