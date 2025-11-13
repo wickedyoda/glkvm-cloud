@@ -1,9 +1,11 @@
 package main
 
 import (
+    "context"
     "encoding/base64"
     "encoding/json"
     "fmt"
+    oidc "github.com/coreos/go-oidc/v3/oidc"
     "github.com/fanjindong/go-cache"
     "github.com/gin-gonic/gin"
     "github.com/gorilla/sessions"
@@ -20,6 +22,8 @@ import (
 var (
     // Session store for OAuth flow
     oauthStore *sessions.CookieStore
+    // Global OIDC verifier
+    oidcVerifier *oidc.IDTokenVerifier
 )
 
 // Register OIDC routes
@@ -27,6 +31,24 @@ func RegisterOIDCRoutes(r *gin.Engine, cfg *Config) {
     if !cfg.OIDCEnabled {
         return
     }
+
+    // ===== Initialize OIDC provider & ID token verifier =====
+    if cfg.OIDCGenericIssuer == "" {
+        log.Error().Msg("OIDC is enabled but issuer (OIDCGenericIssuer) is empty")
+        return
+    }
+
+    ctx := context.Background()
+    provider, err := oidc.NewProvider(ctx, cfg.OIDCGenericIssuer)
+    if err != nil {
+        log.Error().Err(err).Msg("Failed to initialize OIDC provider")
+        return
+    }
+
+    oidcVerifier = provider.Verifier(&oidc.Config{
+        ClientID: cfg.OIDCGenericClientID,
+        // You can set SkipIssuerCheck, SkipClientIDCheck here if needed, but not recommended.
+    })
 
     // Initialize session store
     sessionSecret := generateRandomString(32)
@@ -129,17 +151,32 @@ func oidcCallbackHandler(cfg *Config) gin.HandlerFunc {
         var userEmail string
         var userName string
 
-        // Standard OIDC – parse from ID token
-        idToken, ok := tokens["id_token"].(string)
+        // Standard OIDC – verify and parse ID token
+        rawIDToken, ok := tokens["id_token"].(string)
         if !ok {
             log.Error().Msg("No ID token in response")
             c.Redirect(http.StatusFound, "/?error=no_id_token")
             return
         }
 
-        claims, err := parseIDToken(idToken)
+        if oidcVerifier == nil {
+            log.Error().Msg("OIDC verifier is not initialized")
+            c.Redirect(http.StatusFound, "/?error=server_config")
+            return
+        }
+
+        // ==== Signature + standard claims verification ====
+        idToken, err := oidcVerifier.Verify(c.Request.Context(), rawIDToken)
         if err != nil {
-            log.Error().Err(err).Msg("Failed to parse ID token")
+            log.Error().Err(err).Msg("Failed to verify ID token signature/claims")
+            c.Redirect(http.StatusFound, "/?error=invalid_token")
+            return
+        }
+
+        // Decode claims into a map
+        claims := map[string]interface{}{}
+        if err := idToken.Claims(&claims); err != nil {
+            log.Error().Err(err).Msg("Failed to parse ID token claims")
             c.Redirect(http.StatusFound, "/?error=invalid_token")
             return
         }

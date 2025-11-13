@@ -74,6 +74,7 @@ type Config struct {
     OIDCGenericRedirectURL  string
     OIDCGenericScopes       []string
     OIDCGenericAllowedUsers []string
+    OIDCGenericIssuer       string
 }
 
 // docker mode fixed path for reading certificate
@@ -126,6 +127,7 @@ func (cfg *Config) Parse(c *cli.Command) error {
 
     // Generic OIDC Provider (standard OIDC provider flags)
     getFlagOpt(c, "oidc-enabled", &cfg.OIDCEnabled)
+    getFlagOpt(c, "oidc-generic-issuer", &cfg.OIDCGenericIssuer)
     getFlagOpt(c, "oidc-generic-client-id", &cfg.OIDCGenericClientID)
     getFlagOpt(c, "oidc-generic-client-secret", &cfg.OIDCGenericClientSecret)
     getFlagOpt(c, "oidc-generic-auth-url", &cfg.OIDCGenericAuthURL)
@@ -199,8 +201,15 @@ func parseYamlCfg(cfg *Config, conf string) error {
     // ===== OIDC configuration (generic OIDC provider) =====
     // Switch and basic endpoints
     getConfigOpt(yamlCfg, "oidc-enabled", &cfg.OIDCEnabled)
+    getConfigOpt(yamlCfg, "oidc-generic-issuer", &cfg.OIDCGenericIssuer)
     getConfigOpt(yamlCfg, "oidc-generic-client-id", &cfg.OIDCGenericClientID)
-    getConfigOpt(yamlCfg, "oidc-generic-client-secret", &cfg.OIDCGenericClientSecret)
+
+    // Note: oidc-generic-client-secret is intentionally not read from YAML
+    // to avoid checking secrets into config files and leaking in logs.
+    // It is always read directly from the OIDC_CLIENT_SECRET environment variable below.
+    if envSecret := os.Getenv("OIDC_CLIENT_SECRET"); envSecret != "" {
+        cfg.OIDCGenericClientSecret = envSecret
+    }
 
     getConfigOpt(yamlCfg, "oidc-generic-auth-url", &cfg.OIDCGenericAuthURL)
     getConfigOpt(yamlCfg, "oidc-generic-token-url", &cfg.OIDCGenericTokenURL)
