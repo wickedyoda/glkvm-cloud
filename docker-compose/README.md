@@ -42,7 +42,6 @@
       (e.g. `https://accounts.google.com`, `https://your-tenant.auth0.com/`)
    - `OIDC_CLIENT_ID`: client ID issued by your OIDC provider
    - `OIDC_CLIENT_SECRET`: client secret issued by your OIDC provider
-      *(recommended to set via environment variable rather than YAML files)*
    - `OIDC_AUTH_URL`: authorization endpoint URL
    - `OIDC_TOKEN_URL`: token endpoint URL
    - `OIDC_REDIRECT_URL`: redirect (callback) URL registered in your OIDC provider
@@ -54,10 +53,10 @@
    - `OIDC_ALLOWED_SUBS`: comma-separated list of allowed OIDC subject (`sub`) IDs (optional)
    - `OIDC_ALLOWED_USERNAMES`: comma-separated list of allowed usernames (`preferred_username` or `name`) (optional)
    - `OIDC_ALLOWED_GROUPS`: comma-separated list of allowed OIDC groups (optional)
-
-   ⚠️ **Note:** All configuration should be done in the `.env` file.
+   
+⚠️ **Note:** All configuration should be done in the `.env` file.
     You don’t need to modify `docker-compose.yml`, templates, or scripts directly.
-
+   
 3. **Start the services**
 
    ```bash
