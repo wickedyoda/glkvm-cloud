@@ -6,7 +6,7 @@
  * @FilePath: \kvm-cloud-frontend\src\models\component.ts
  * @Description: 组件有关的models
  */
-import type { SelectOptions } from '@gl/main'
+import type { SelectOptions } from 'gl-web-main'
 import type { TableProps } from 'ant-design-vue'
 
 export interface DropdownGroupItem<T = any> {

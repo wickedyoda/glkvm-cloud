@@ -64,8 +64,8 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
-import { BaseModal } from '@gl/main/components'
-import { FormRules, OnBeforeOk, useValidateInfo } from '@gl/main'
+import { BaseModal } from 'gl-web-main/components'
+import { FormRules, OnBeforeOk, useValidateInfo } from 'gl-web-main'
 import { t } from '@/hooks/useLanguage'
 import { DeviceInfo, ExecuteCommandFormData } from '@/models/device'
 import { FormInstance } from 'ant-design-vue'

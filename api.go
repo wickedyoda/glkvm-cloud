@@ -217,7 +217,9 @@ func (srv *RttyServer) ListenAPI() error {
 
     r.POST("/signin", func(c *gin.Context) {
         type credentials struct {
-            Password string `json:"password"`
+            Username   string `json:"username"`
+            Password   string `json:"password"`
+            AuthMethod string `json:"authMethod"`
         }
 
         creds := credentials{}
@@ -228,17 +230,41 @@ func (srv *RttyServer) ListenAPI() error {
             return
         }
 
-        if httpLogin(cfg, creds.Password) {
+        // 自动确定认证方法或使用指定的方法 (Auto-determine auth method or use specified method)
+        authMethod := creds.AuthMethod
+        if authMethod == "" {
+            // 基于是否提供用户名进行自动检测 (Auto-detect based on whether username is provided)
+            if creds.Username != "" && cfg.LdapEnabled {
+                authMethod = "ldap"
+            } else {
+                authMethod = "legacy"
+            }
+        }
+
+        success, errorType := AuthenticateUserWithError(cfg, creds.Username, creds.Password, authMethod)
+        if success {
             sid := utils.GenUniqueID()
-
             httpSessions.Set(sid, true, cache.WithEx(httpSessionExpire))
-
             c.SetCookie("sid", sid, 0, "", "", false, true)
             c.Status(http.StatusOK)
             return
         }
 
-        c.Status(http.StatusUnauthorized)
+        // 根据错误类型返回适当的错误信息 (Return appropriate error message based on error type)
+        if errorType == "authorization" {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authorized"})
+        } else {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed"})
+        }
+    })
+
+    r.GET("/auth-config", func(c *gin.Context) {
+        authConfig := gin.H{
+            "ldapEnabled":    cfg.LdapEnabled,
+            "legacyPassword": cfg.Password != "",
+            "oidcEnabled":    cfg.OIDCEnabled,
+        }
+        c.JSON(http.StatusOK, authConfig)
     })
 
     r.GET("/alive", func(c *gin.Context) {
@@ -249,6 +275,8 @@ func (srv *RttyServer) ListenAPI() error {
         }
     })
 
+    // ===== 添加OIDC路由 =====
+    RegisterOIDCRoutes(r, cfg)
     fs, err := fs.Sub(staticFs, "ui/dist")
     if err != nil {
         return err
@@ -295,15 +323,23 @@ func (srv *RttyServer) ListenAPI() error {
         host := c.Request.Host
         hostname, _, err := net.SplitHostPort(host)
         if err != nil {
-            // 没有端口时直接使用 host
-            hostname = host
+            hostname = host // Use host directly if no port
+        }
+
+        // Choose value by priority:
+        // 1) If request host is a domain (not an IP), keep it.
+        // 2) Else if it's an IP and cfg.WebrtcIP is set, use cfg.WebrtcIP.
+        // 3) Else keep the request IP.
+        chosen := hostname
+        if isIP(hostname) && cfg.WebrtcIP != "" {
+            chosen = cfg.WebrtcIP
         }
 
         c.JSON(http.StatusOK, gin.H{
-            "hostname":       hostname,
+            "hostname":       chosen, // reuse the same chosen value
             "port":           cfg.AddrDev,
             "token":          cfg.Token,
-            "webrtcIP":       cfg.WebrtcIP,
+            "webrtcIP":       chosen, // same as hostname
             "webrtcPort":     cfg.WebrtcPort,
             "webrtcUsername": cfg.WebrtcUsername,
             "webrtcPassword": cfg.WebrtcPassword,
@@ -330,6 +366,10 @@ func (srv *RttyServer) ListenAPI() error {
     log.Info().Msgf("Listen users on: %s", ln.Addr().(*net.TCPAddr))
 
     return r.RunListener(ln)
+}
+
+func isIP(addr string) bool {
+    return net.ParseIP(addr) != nil
 }
 
 func callUserHookUrl(cfg *Config, c *gin.Context) bool {

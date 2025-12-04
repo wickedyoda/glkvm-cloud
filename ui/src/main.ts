@@ -8,7 +8,7 @@
  */
 
 import { createApp } from 'vue'
-import '@gl/main/style.css'
+import 'gl-web-main/style.css'
 import '@/styles/index.scss'
 import App from './App.vue'
 import projectInitialize from './projectInitialize'

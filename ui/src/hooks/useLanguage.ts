@@ -11,7 +11,7 @@ import i18n from '@/lang'
 import { languageLabelMap } from '@/models/setting'
 import { computed } from 'vue'
 import { LocalStorageKeys, useLocalStorage } from './useLocalStorage'
-import { Languages } from '@gl/main'
+import { Languages } from 'gl-web-main'
 /** 语言hook */
 export default function useLanguage () {
     // @ts-ignore

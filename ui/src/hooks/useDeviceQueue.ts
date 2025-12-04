@@ -6,7 +6,7 @@
  * @FilePath: \kvm-cloud-frontend\src\hooks\useDeviceQueue.ts
  * @Description: 自动发现设备队列
  */
-import { AnyObject, deepClone, isEmpty } from '@gl/main'
+import { AnyObject, deepClone, isEmpty } from 'gl-web-main'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const DEFAULT_QUEUE_INTERVAL = 400

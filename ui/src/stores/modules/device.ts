@@ -8,7 +8,7 @@
  */
 import { getDeviceListApi } from '@/api/device'
 import { type DeviceInfo, type DeviceQuery } from '@/models/device'
-import { PageLink } from '@gl/main'
+import { PageLink } from 'gl-web-main'
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 

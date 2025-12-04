@@ -36,8 +36,8 @@
 
 <script setup lang="ts" generic="T extends AnyObject">
 import type { DropdownGroupItem } from '@/models/component'
-import type { AnyObject } from '@gl/main'
-import { BaseDivider } from '@gl/main/components'
+import type { AnyObject } from 'gl-web-main'
+import { BaseDivider } from 'gl-web-main/components'
 import { Dropdown, Menu, Radio, RadioGroup } from 'ant-design-vue'
 import type { Trigger } from 'ant-design-vue/es/dropdown/props'
 import { computed, reactive, watch } from 'vue'

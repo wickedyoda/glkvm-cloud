@@ -18,11 +18,18 @@
   },
   "login": {
     "authorizationRequired": "Authorization Required",
+    "username": "Username",
     "password": "Password",
     "signIn": "Sign In",
     "enterPwdTip": "Please enter your password",
     "incorrectPwd": "Incorrect Password",
-    "signOut": "Sign Out"
+    "notAuthorized": "Not Authorized",
+    "signOut": "Sign Out",
+    "authOptions": "Authentication Options",
+    "ldapAuth": "Enter username and password for LDAP authentication",
+    "webManagementAuth": "Leave username empty and use web management password",
+    "or": "OR",
+    "loginWithOidc": "Log in with OIDC"
   },
   "device": {
     "devices": "Devices",

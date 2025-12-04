@@ -24,7 +24,7 @@
 </template> 
 
 <script setup lang="ts">
-import { ViewType } from '@gl/main'
+import { ViewType } from 'gl-web-main'
 import { Tooltip } from 'ant-design-vue'
 
 const props = withDefaults(defineProps<{

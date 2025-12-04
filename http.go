@@ -35,6 +35,7 @@ import (
     "net/http"
     "net/url"
     "strconv"
+    "strings"
     "sync"
     "sync/atomic"
     "time"
@@ -44,7 +45,6 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/rs/zerolog/log"
     "github.com/valyala/bytebufferpool"
-    "golang.org/x/net/publicsuffix"
 )
 
 type HttpProxySession struct {
@@ -346,13 +346,8 @@ func httpProxyRedirect(srv *RttyServer, c *gin.Context, group string) {
         location = fmt.Sprintf("https://%s%s?sid=%s", hostname, cfg.AddrHttpProxy, sid)
         log.Info().Msgf("Using IP redirect: %s", location)
     } else {
-        // 域名访问，拼接 devid 子域名
-        eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(hostname)
-        if err != nil {
-            log.Info().Msgf("Error parsing domain: %v", err)
-            eTLDPlusOne = hostname // fallback
-        }
-        location = fmt.Sprintf("https://%s.%s%s?sid=%s", devid, eTLDPlusOne, cfg.AddrHttpProxy, sid)
+        redirHost := buildRedirectHost(hostname, devid)
+        location = fmt.Sprintf("https://%s%s?sid=%s", redirHost, cfg.AddrHttpProxy, sid)
         log.Info().Msgf("Using domain redirect: %s", location)
     }
 
@@ -623,4 +618,41 @@ func Write302WithCookie(conn net.Conn, location, cookieName, cookieValue string)
         location, cookie,
     )
     _, _ = conn.Write([]byte(response))
+}
+
+// buildRedirectHost removes the first label of the hostname and prepends devid.
+// Rules:
+// - "www.example.com"         -> "devid.example.com"
+// - "www.l1.example.com"      -> "devid.l1.example.com"
+// - "www.l1.l2.example.com"   -> "devid.l1.l2.example.com"
+// - Two-level domain "example.com" -> "devid.example.com"
+// - Single label / abnormal cases   -> "devid." + hostname (fallback)
+//
+// The input hostname must be a pure hostname without port.
+func buildRedirectHost(hostname, devid string) string {
+    // Allow FQDN with trailing dot like "example.com."
+    hostname = strings.TrimSuffix(hostname, ".")
+
+    // Split into labels
+    labels := strings.Split(hostname, ".")
+    // Remove empty labels (in case of consecutive dots)
+    compact := make([]string, 0, len(labels))
+    for _, l := range labels {
+        if l != "" {
+            compact = append(compact, l)
+        }
+    }
+    labels = compact
+
+    switch len(labels) {
+    case 0:
+        return devid // extreme case: just return devid
+    case 1:
+        // Single label (e.g., "localhost") — keep original as suffix
+        return devid + "." + labels[0]
+    default:
+        // >=2: drop the leftmost label
+        suffix := strings.Join(labels[1:], ".")
+        return devid + "." + suffix
+    }
 }

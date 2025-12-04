@@ -8,7 +8,7 @@
  */
 import { computed } from 'vue'
 import useLanguage from './useLanguage'
-import type { SelectOptions } from '@gl/main'
+import type { SelectOptions } from 'gl-web-main'
 
 export const useTranslatedOptions = <T>(options: SelectOptions<T>[]) => {
     const { t } = useLanguage()

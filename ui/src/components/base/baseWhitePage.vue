@@ -53,11 +53,11 @@
 
 <script setup lang="ts">
 import useLanguage from '@/hooks/useLanguage'
-import { languageOptions, Languages } from '@gl/main'
+import { languageOptions, Languages } from 'gl-web-main'
 import BaseStep from './baseStep.vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/modules/user'
-import { BaseDropdownSelect } from '@gl/main/components'
+import { BaseDropdownSelect } from 'gl-web-main/components'
 import { isForeignEnv } from '@/utils'
 
 const route = useRoute()

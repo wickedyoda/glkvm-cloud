@@ -8,7 +8,7 @@
 */
 
 import { t } from '@/hooks/useLanguage'
-import { glConfirm, type BaseConfirmProps } from '@gl/main'
+import { glConfirm, type BaseConfirmProps } from 'gl-web-main'
 import { message } from 'ant-design-vue'
 import { ValidateErrorEntity } from 'ant-design-vue/es/form/interface'
 import { AxiosError } from 'axios'
