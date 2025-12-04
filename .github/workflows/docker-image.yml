@@ -31,16 +31,9 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Compute timestamp tag
+        id: tags
+        run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -51,17 +44,15 @@ jobs:
 
       - name: Build and push Docker image
         env:
-          TAGS: ${{ steps.meta.outputs.tags }}
+        
+          TIMESTAMP: ${{ steps.tags.outputs.timestamp }}
         run: |
           set -euo pipefail
-          tag_args=()
-          while IFS= read -r tag; do
-            [[ -z "$tag" ]] && continue
-            tag_args+=(--tag "$tag")
-          done <<< "$TAGS"
-          if [[ ${#tag_args[@]} -eq 0 ]]; then
-            tag_args+=(--tag "$IMAGE_NAME:latest")
-          fi
+          tag_args=(
+            --tag "latest"
+            --tag "${TIMESTAMP}"
+          )
+
           echo "Building image with tags: ${tag_args[*]}"
           python3 scripts/build_docker_image.py \
             --image "$IMAGE_NAME" \
