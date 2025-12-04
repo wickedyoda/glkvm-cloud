@@ -59,11 +59,22 @@
 
 ## 📦 安装
 
+我们提供 **两种** 安装 GLKVM Cloud 的方式：
+
+#### A) 一键安装脚本（推荐）
+
+> **注意：** 一键安装脚本基于 **Docker**。它会自动完成 Docker / Docker Compose 的安装、拉取镜像、根据模板渲染配置文件，并启动所有服务。
+
 使用 **root 权限** 运行以下命令安装 GLKVM 轻量云：
 
 ```bash
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
+
+#### B) 使用 Docker 手动安装
+
+> 完整参考文档请查看：[`docker-compose/README-CN.md`](https://github.com/gl-inet/glkvm-cloud/blob/main/docker-compose/README-CN.md)
+
 
 ### 🌐 平台访问
 
