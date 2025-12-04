@@ -64,6 +64,35 @@ Run the following command **as root** to install GLKVM Cloud:
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
 
+### 🐳 Universal Docker Build
+
+To package the platform as a Docker image on Linux, macOS, or Windows, use the
+cross-platform helper script in this repository:
+
+```bash
+python scripts/build_docker_image.py --image ghcr.io/wickedyoda/glkvm-cloud --tag latest
+```
+
+This command mirrors the installation script above by compiling the Go binary
+with the correct build metadata before assembling the Docker image defined in
+[`Dockerfile`](./Dockerfile). Add `--push` to publish the resulting tag to your
+container registry once you are authenticated with Docker.
+
+### 🧰 Docker Compose Deployment
+
+If you prefer managing the service with Docker Compose, the repository includes
+[`docker-compose.yml`](./docker-compose.yml) with sensible defaults. Update
+`rttys.conf` (and the optional certificate files) for your environment and then
+start the stack:
+
+```bash
+docker compose up -d
+```
+
+The compose file publishes the required TCP and UDP ports (443, 10443, 5912,
+and 3478) so the web interface, device connections, and TURN/WebRTC traffic can
+flow to the container.
+
 ### 🌐 Platform Access
 
 Once the installation is complete, access the platform via:

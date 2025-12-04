@@ -1,0 +1,59 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ghcr.io/wickedyoda/glkvm-cloud
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Compute timestamp tag
+        id: tags
+        run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: wickedyoda
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        env:
+          TIMESTAMP: ${{ steps.tags.outputs.timestamp }}
+        run: |
+          set -euo pipefail
+          tag_args=(
+            --tag "latest"
+            --tag "${TIMESTAMP}"
+          )
+          echo "Building image with tags: ${tag_args[*]}"
+          python3 scripts/build_docker_image.py \
+            --image "$IMAGE_NAME" \
+            --platform linux/amd64 \
+            --push \
+            "${tag_args[@]}"

@@ -64,6 +64,31 @@
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
 
+### 🐳 通用 Docker 构建
+
+在 Linux、macOS 或 Windows 上打包 Docker 镜像时，可以使用仓库提供的
+跨平台辅助脚本：
+
+```bash
+python scripts/build_docker_image.py --image ghcr.io/wickedyoda/glkvm-cloud --tag latest
+```
+
+该命令会按照安装脚本的方式编译 Go 二进制程序，并使用 [`Dockerfile`](./Dockerfile)
+构建镜像。登录容器仓库后，追加 `--push` 即可同步推送生成的标签。
+
+### 🧰 Docker Compose 部署
+
+如果你更习惯使用 Docker Compose 管理服务，可以直接使用仓库中的
+[`docker-compose.yml`](./docker-compose.yml)。根据实际环境修改 `rttys.conf`
+（以及可选的证书文件），然后运行：
+
+```bash
+docker compose up -d
+```
+
+该 Compose 文件已经映射所需的 TCP/UDP 端口（443、10443、5912 和 3478），
+确保 Web、设备连接以及 TURN/WebRTC 流量能够到达容器。
+
 ### 🌐 平台访问
 
 安装完成后，你可以通过以下方式访问平台：

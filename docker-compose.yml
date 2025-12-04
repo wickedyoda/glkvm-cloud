@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  glkvm-cloud:
+    image: ghcr.io/wickedyoda/glkvm-cloud:latest
+    container_name: glkvm-cloud
+    restart: unless-stopped
+    # Update the bind mounts below with your customised configuration files.
+    volumes:
+      - ./rttys.conf:/etc/rttys/rttys.conf:ro
+      # - ./certificate:/etc/rttys/certificate:ro
+      # - ./turnserver.conf:/etc/turnserver.conf:ro
+    ports:
+      - "443:443"
+      - "10443:10443"
+      - "5912:5912"
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    command: ["-c", "/etc/rttys/rttys.conf"]
