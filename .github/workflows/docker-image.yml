@@ -44,6 +44,7 @@ jobs:
 
       - name: Build and push Docker image
         env:
+        
           TIMESTAMP: ${{ steps.tags.outputs.timestamp }}
         run: |
           set -euo pipefail
@@ -51,6 +52,7 @@ jobs:
             --tag "latest"
             --tag "${TIMESTAMP}"
           )
+
           echo "Building image with tags: ${tag_args[*]}"
           python3 scripts/build_docker_image.py \
             --image "$IMAGE_NAME" \
